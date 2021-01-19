@@ -58,13 +58,7 @@ def getHeights(input):
    xOrigin = transform[0]
    yOrigin = transform[3]
 
-   transformer = Transformer.from_crs('EPSG:4326', UTM32)
-   for i in samples: 
-      currFeature = samples[i]
-      currCoords = currFeature.geometry.coordinates
-      heights = []
-      import pdb; pdb.set_trace()
-      
+   transformer = Transformer.from_crs('EPSG:4326', UTM32)     
       for j in currCoords: 
          pixCoords = pixelCoords(transformer.itransform(currCoords[j]))
 
