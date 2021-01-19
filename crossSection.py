@@ -16,7 +16,7 @@ UTM32 = '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs'
 # %%
 # Stonewalls
 
-layer = gpd.read_file('/mnt/c/Users/AFER/Documents/Projects/StoneWalls/Data/BES_STEN_JORDDIGER_SHAPE/Stonewalls_AEROE.shp')
+layer = gpd.read_file('/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/Stonewalls')
 layer = layer.to_crs(epsg=25832)
 
 layer['length'] = layer.geometry.length
@@ -64,10 +64,11 @@ def insertPoint(lineString, sampleCount):
         points = [line.interpolate(distance) for distance in distances]
         multipoint = unary_union(points)
         print(multipoint)
+        
 
 selection = layer[0:5]    
-#sample = insertPoint(selection, 10.0)
-#print(sample)
+insertPoint(selection, 10.0)
+# print(sample)
 
 #%%
 ##another way of doing, simple extraction
