@@ -9,10 +9,11 @@ from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import unary_union, substring
 import matplotlib.pyplot as plt
 from pyproj import Transformer
+import LOCAL_VARS
 
 
 #%%
-layer = gpd.read_file('/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/Stonewalls')
+layer = gpd.read_file(LOCAL_VARS.STONEWALLS)
 layer = layer.to_crs(epsg=25832)
 
 layer['length'] = layer.geometry.length
@@ -34,46 +35,54 @@ selection = layer[0:5]
 sections = insertPoint(selection, 10.0)
 # print(sample)
 # %%
-def getHeights(input):
-
-   def pixelCoords(arr):
-      return [
-         math.floor((arr[0] - xOrigin) / pixelWidth),
-         math.floor((yOrigin - arr[1]) / pixelHeight),
-      ]   
-
-   DTM = '/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/DTM_AEROE/DTM_AEROE.vrt'
-   UTM32 = '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs'
-   # samples = input.data
-   # options = input.options
-
-   samples = input
-
+def getHeights(points, DTM):
    dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
    band = dataset.GetRasterBand(1)
 
    transform = dataset.GetGeoTransform()
    pixelWidth = abs(transform[1])
    pixelHeight = abs(transform[5])
+
    xOrigin = transform[0]
    yOrigin = transform[3]
 
-   transformer = Transformer.from_crs('EPSG:4326', UTM32)     
-      for j in currCoords: 
-         pixCoords = pixelCoords(transformer.itransform(currCoords[j]))
+   elevation = []
+   for point in points:
 
-         heights = band.pixels.get(pixCoords[0], pixCoords[1])
-         heights.append(round(height, 4))
+      px = int((point.x - xOrigin) / pixelWidth)
+      py = int((yOrigin - point.y) / pixelHeight)
+
+      
+      data = band.ReadAsArray(px, py, 1, 1)
+      elevation.append(data[0][0])
+      # data = band.ReadAsArray(xOrigin + 100 , yOrigin + 100, 1, 1)
+      
+      # elevation.append(data[0][0])
+      # print(elevation)
 
 
-         currFeature.geometry.coordinates = [
-         currFeature.geometry.coordinates[0],
-         currFeature.geometry.coordinates[currCoords.length - 1],
-         ]
-         currFeature.properties.profile = heights.toString()
-         currFeature.properties.stepLength = options.stepLength
+
+      # for j in currCoords: 
+      #    pixCoords = pixelCoords(transformer.itransform(currCoords[j]))
+
+      #    heights = band.pixels.get(pixCoords[0], pixCoords[1])
+      #    heights.append(round(height, 4))
 
 
-   return samples
-result = getHeights(sections)
+      #    currFeature.geometry.coordinates = [
+      #    currFeature.geometry.coordinates[0],
+      #    currFeature.geometry.coordinates[currCoords.length - 1],
+      #    ]
+      #    currFeature.properties.profile = heights.toString()
+      #    currFeature.properties.stepLength = options.stepLength
+
+
+   return elevation
 #%%
+from shapely.geometry import MultiPoint
+points = MultiPoint([(586214.1795694472, 6080202.035042746), (586236.0934224499, 6080181.825884934) , (586257.8189973006, 6080161.415198896), (586300.7968858992, 6080120.096076963), (586322.1894320849, 6080099.335885251)])
+
+result = getHeights(points, LOCAL_VARS.DTM)
+print(result)
+# print(list(points.geoms))
+
