@@ -7,18 +7,17 @@ import shapely
 from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import unary_union, substring
 import matplotlib.pyplot as plt
-import sys, math
-from LOCAL_VARS import DTM, STONEWALLS
+import LOCAL_VARS
 
 #%%
 # Elevation data
-theDTM = DTM
+DTM = LOCAL_VARS.DTM
 UTM32 = '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs'
 
 # %%
 # Stonewalls
 
-layer = gpd.read_file(STONEWALLS)
+layer = gpd.read_file(LOCAL_VARS.STONEWALLS)
 layer = layer.to_crs(epsg=25832)
 
 layer['length'] = layer.geometry.length

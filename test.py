@@ -9,71 +9,63 @@ from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import unary_union, substring
 import matplotlib.pyplot as plt
 from pyproj import Transformer
+import LOCAL_VARS
 
+import crossSection
 
-#%%
-layer = gpd.read_file('/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/Stonewalls')
-layer = layer.to_crs(epsg=25832)
+# 
 
-layer['length'] = layer.geometry.length
+# for coord in tmp.coords:
+#    print(coord)
 
-#%%
-##function to insert points at defined equidistance along each LineString
-def insertPoint(lineString, sampleCount):
-   crossSections = []
-   for index, row in lineString.iterrows():
-      line = row['geometry']
-      stepLength = line.length / (sampleCount - 1)
-      distances = np.arange(0, line.length, stepLength)
-      points = [line.interpolate(distance) for distance in distances]
-      multipoint = unary_union(points)
-      crossSections.append(multipoint)
-   return crossSections
+# tmp = MultiPoint([(10,22), (25, 25), (30, 30), (44, 55)])
 
-selection = layer[0:5]    
-sections = insertPoint(selection, 10.0)
-# print(sample)
+# for coord in tmp:
+#    print(coord.coords[0])
 # %%
-def getHeights(input):
+import math
+import time
+def getPoint90(pt, bearing, dist):
+    angle = bearing + 180
+    bearing = math.radians(angle)
+    x = pt.x + dist * math.cos(bearing)
+    y = pt.y + dist * math.sin(bearing)
+    return Point(x, y)
+## get the second end point of a tick
+def getPoint270(pt, bearing, dist):
+    bearing = math.radians(bearing)
+    x = pt.x + dist * math.cos(bearing)
+    y = pt.y + dist * math.sin(bearing)
+    return Point(x, y)
 
-   def pixelCoords(arr):
-      return [
-         math.floor((arr[0] - xOrigin) / pixelWidth),
-         math.floor((yOrigin - arr[1]) / pixelHeight),
-      ]   
+def redistribute_vertices(geom, distance):
+    if geom.geom_type == 'LineString':
+        num_vert = int(round(geom.length / distance))
+        if num_vert == 0:
+            num_vert = 1
+        return LineString(
+            [geom.interpolate(float(n) / num_vert, normalized=True)
+             for n in range(num_vert + 1)])
+    elif geom.geom_type == 'MultiLineString':
+        parts = [redistribute_vertices(part, distance)
+                 for part in geom]
+        return type(geom)([p for p in parts if not p.is_empty])
+    else:
+        raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
-   DTM = '/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/DTM_AEROE/DTM_AEROE.vrt'
-   UTM32 = '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs'
-   # samples = input.data
-   # options = input.options
+point = Point(5,5)
 
-   samples = input
+left = getPoint90(point, 0, 5)
+right = getPoint270(point, 0, 5)
 
-   dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
-   band = dataset.GetRasterBand(1)
+line = LineString([left, right])
 
-   transform = dataset.GetGeoTransform()
-   pixelWidth = abs(transform[1])
-   pixelHeight = abs(transform[5])
-   xOrigin = transform[0]
-   yOrigin = transform[3]
+cross = redistribute_vertices(line, 1)
 
-   transformer = Transformer.from_crs('EPSG:4326', UTM32)     
-      for j in currCoords: 
-         pixCoords = pixelCoords(transformer.itransform(currCoords[j]))
+from getHeights import getHeights
 
-         heights = band.pixels.get(pixCoords[0], pixCoords[1])
-         heights.append(round(height, 4))
-
-
-         currFeature.geometry.coordinates = [
-         currFeature.geometry.coordinates[0],
-         currFeature.geometry.coordinates[currCoords.length - 1],
-         ]
-         currFeature.properties.profile = heights.toString()
-         currFeature.properties.stepLength = options.stepLength
+elevs = getHeights(cross, LOCAL_VARS.DTM)
+# %%
 
 
-   return samples
-result = getHeights(sections)
-#%%
+
