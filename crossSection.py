@@ -7,16 +7,18 @@ import shapely
 from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import unary_union, substring
 import matplotlib.pyplot as plt
+import sys, math
+from LOCAL_VARS import DTM, STONEWALLS
 
 #%%
 # Elevation data
-DTM = '/mnt/c/Users/AFER/Documents/Projects/StoneWalls/Data/DTM/DTM_AEROE.vrt'
+theDTM = DTM
 UTM32 = '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs'
 
 # %%
 # Stonewalls
 
-layer = gpd.read_file('/mnt/c/Users/EZRA/OneDrive - NIRAS/thesis/Data/Aeroe/Stonewalls')
+layer = gpd.read_file(STONEWALLS)
 layer = layer.to_crs(epsg=25832)
 
 layer['length'] = layer.geometry.length
@@ -48,7 +50,7 @@ gdf_line_interpolate = gdf_line.copy()
 gdf_line_interpolate.geometry = gdf_line.geometry.apply(redistribute_vertices,distance=15)
 gdf_line_interpolate['nverts'] = gdf_line_interpolate.geometry.apply(lambda x: len(x.coords))
 
-
+#%%
 #or just adding the attribute column:
 gdf_line_interpolate = gdf_line.copy()
 gdf_line_interpolate['nverts'] = gdf_line.geometry.apply(redistribute_vertices,distance=15).apply(lambda x: len(x.coords))
