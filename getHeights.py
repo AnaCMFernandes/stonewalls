@@ -13,10 +13,12 @@ def getHeights(points, DTM):
    yOrigin = transform[3]
 
    elevation = []
-   for point in points:
+   for coord in points.coords:
 
-      px = int((point.x - xOrigin) / pixelWidth)
-      py = int((yOrigin - point.y) / pixelHeight)
+      (x, y) = coord
+
+      px = int((x - xOrigin) / pixelWidth)
+      py = int((yOrigin - y) / pixelHeight)
       
       data = band.ReadAsArray(px, py, 1, 1)
       elevation.append(data[0][0])
