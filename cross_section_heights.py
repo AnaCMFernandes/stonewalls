@@ -10,6 +10,8 @@ from getHeights import getHeights
 from crossSection import redistribute_vertices
 import make_crossline as mkcross
 
+from matplotlib import pyplot as plt
+
 #%%
 # Stonewalls
 layer = gpd.read_file(LOCAL_VARS.STONEWALLS)
@@ -37,4 +39,7 @@ for i, p in enumerate(coords):
     # print(cross_points)
     heights = getHeights(cross_points, DTM)
     print(heights)
+
+    plt.plot(heights)
+    plt.show
 # %%
