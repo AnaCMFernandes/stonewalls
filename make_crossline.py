@@ -29,6 +29,7 @@ def make_crossline(pt, bearing, dist):
    right = get_point90(pt, bearing, (dist/2))
    return LineString([left, right])
 
+#TODO add center point
 
 
 
