@@ -3,6 +3,14 @@ import math
 import numpy as np
 from shapely.geometry import Point, LineString, MultiPoint
 
+def calculate_initial_compass_bearing(pointA, pointB):
+    startx,starty,endx,endy=pointA[0],pointA[1],pointB[0],pointB[1]
+    angle=math.atan2(endy-starty, endx-startx)
+    if angle>=0:
+        return math.degrees(angle)
+    else:
+        return math.degrees((angle+2*math.pi))
+
 def get_point270(pt, bearing, dist):
     angle = bearing + 180
     bearing = math.radians(angle)
