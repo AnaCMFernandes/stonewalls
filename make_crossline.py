@@ -5,7 +5,7 @@ from shapely.geometry import Point, LineString, MultiPoint
 
 def calculate_initial_compass_bearing(pointA, pointB):
     startx,starty,endx,endy=pointA[0],pointA[1],pointB[0],pointB[1]
-    angle=math.atan2(endy-starty, endx-startx)
+    angle=math.atan2(endx-startx, endy-starty)
     if angle>=0:
         return math.degrees(angle)
     else:
@@ -30,6 +30,5 @@ def make_crossline(pt, bearing, dist):
    return LineString([left, right])
 
 #TODO add center point
-
 
 

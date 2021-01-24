@@ -23,9 +23,6 @@ gdf = gdf.to_crs(epsg=25832)
 DTM = LOCAL_VARS.DTM
 UTM32 = "+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs"
 
-#%%
-
-
 ## stonewall of interest
 wall38305 = gdf.loc[gdf['OBJECTID']==38305]
 
@@ -34,9 +31,11 @@ wall38305 = gdf.loc[gdf['OBJECTID']==38305]
 
 line = [i for i in wall38305.geometry][0]
 
-
 linestring = redistribute_vertices(line, 10.0)
 coords = list(linestring.coords)
+
+object_ids = []
+geoms = []
 
 for i, p in enumerate(coords):
     ## every point except for the last point will use the next point to create bearing
@@ -57,28 +56,28 @@ for i, p in enumerate(coords):
     # bearing_point = linestring.interpolate(dist)
   
     cross = mkcross.make_crossline(vert, bearing, 10.0)
+
+    object_ids.append(i)
+    geoms.append(cross)
+
     # print(cross)
     cross_points = redistribute_vertices(cross, 0.4)
     # print(cross_points)
     heights = getHeights(cross_points, DTM)
 
+
     # # TODO add back to geometry
     
     plt.figure()
-    plt.scatter(x=[i for i in range(len(heights))], y=heights)
+    plt.scatter(x=np.arange(len(heights)), y=heights)
 plt.show
+data = {'OBJECTID': object_ids, 'geometry': geoms}
+out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
+out_gdf.to_file("cross_sections.geojson", driver='GeoJSON')
 
-#%% 
-gdf.columns
-##%
 # %%
-wall38305 = gdf.loc[gdf['OBJECTID']==38305]
+elev = [59.123,59.1248,59.1069,59.115,59.1393,59.1641,59.1859,59.1773,59.2114,59.3088,59.3231,59.4345,59.5144,59.6234,59.6362,59.5922,59.5899,59.5941,59.6432,59.6467,59.6219,59.5434,59.5554,59.5973,59.5965]
 
-# line = gdf["geometry"][0]
-line = wall38305['geometry']
-print(line)
-line = gdf['geometry'][0]
-print(line)
-linestring = redistribute_vertices(line, 10.0)
-
+plt.scatter(x=np.arange(len(elev)), y=elev)
+plt.show()
 # %%
