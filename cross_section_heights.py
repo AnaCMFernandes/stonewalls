@@ -68,16 +68,9 @@ for i, p in enumerate(coords):
 
     # # TODO add back to geometry
     
-    plt.figure()
-    plt.scatter(x=np.arange(len(heights)), y=heights)
-plt.show
+#     plt.figure()
+#     plt.scatter(x=np.arange(len(heights)), y=heights)
+# plt.show
 data = {'OBJECTID': object_ids, 'geometry': geoms}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("cross_sections.geojson", driver='GeoJSON')
-
-# %%
-elev = [59.123,59.1248,59.1069,59.115,59.1393,59.1641,59.1859,59.1773,59.2114,59.3088,59.3231,59.4345,59.5144,59.6234,59.6362,59.5922,59.5899,59.5941,59.6432,59.6467,59.6219,59.5434,59.5554,59.5973,59.5965]
-
-plt.scatter(x=np.arange(len(elev)), y=elev)
-plt.show()
-# %%
