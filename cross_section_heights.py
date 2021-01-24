@@ -55,7 +55,7 @@ for i, p in enumerate(coords):
     # dist = pd + 0.5
     # bearing_point = linestring.interpolate(dist)
   
-    cross = mkcross.make_crossline(vert, bearing, 10.0)
+    cross = mkcross.make_crossline(vert, bearing, 15.0)
 
     object_ids.append(i)
     geoms.append(cross)
@@ -71,6 +71,8 @@ for i, p in enumerate(coords):
 #     plt.figure()
 #     plt.scatter(x=np.arange(len(heights)), y=heights)
 # plt.show
+
+#%%
 data = {'OBJECTID': object_ids, 'geometry': geoms}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("cross_sections.geojson", driver='GeoJSON')
