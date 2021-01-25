@@ -7,12 +7,14 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import LOCAL_VARS
 import make_crossline as mkcross
-
 from matplotlib import pyplot as plt
+
+import wall_score
 
 import time
 
-#%%
+
+
 # Stonewalls
 gdf = gpd.read_file(LOCAL_VARS.STONEWALLS)
 gdf = gdf.to_crs(epsg=25832)
@@ -33,7 +35,11 @@ linestring = mkcross.redistribute_vertices(line, 10.0)
 coords = list(linestring.coords)
 
 object_ids = []
+elevations = []
 geoms = []
+lr_scores = []
+
+start = time.time()
 
 for i, p in enumerate(coords):
     ## every point except for the last point will use the next point to create bearing
@@ -46,31 +52,28 @@ for i, p in enumerate(coords):
         vert = Point(p)
         previous_vert = Point(coords[i - 1])
         bearing = mkcross.calculate_initial_compass_bearing(previous_vert.coords[0], vert.coords[0])
-
-
-    ## rejected idea that bearing will be made from point created 0.5m from current point on line
-    # pd = linestring.project(Point(p))
-    # dist = pd + 0.5
-    # bearing_point = linestring.interpolate(dist)
   
-    cross = mkcross.make_crossline(vert, bearing, 15.0)
+    cross_section_line = mkcross.make_crossline(vert, bearing, 20.0)
+    cross_points = mkcross.redistribute_vertices(cross_section_line, 0.4)
+    cross_elevations = mkcross.get_heights(cross_points, DTM)
+    lr_score = wall_score.linear_regression_score(cross_elevations)
 
     object_ids.append(i)
-    geoms.append(cross)
-
-    # print(cross)
-    cross_points = mkcross.redistribute_vertices(cross, 0.4)
-    # print(cross_points)
-    heights = mkcross.get_heights(cross_points, DTM)
-
+    geoms.append(cross_section_line)
+    elevations.append(cross_elevations)
+    lr_scores.append(lr_score)
 
     # # TODO add back to geometry
     
-#     plt.figure()
-#     plt.scatter(x=np.arange(len(heights)), y=heights)
-# plt.show
+    # plt.figure()
+    # plt.scatter(x=np.arange(len(heights)), y=heights)
+plt.show
 
-#%%
-data = {'OBJECTID': object_ids, 'geometry': geoms}
+finish = time.time()
+
+print(finish - start)
+
+data = {'OBJECTID': object_ids, 'elevations': elevations, 'lr_score': lr_scores, 'geometry': geoms}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
-out_gdf.to_file("cross_sections.geojson", driver='GeoJSON')
+#%%
+out_gdf.to_file("./data/single_cross_section.geojson", driver='GeoJSON')

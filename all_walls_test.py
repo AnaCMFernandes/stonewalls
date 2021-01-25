@@ -12,6 +12,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import LOCAL_VARS
 import make_crossline as mkcross
+import wall_score
 
 from matplotlib import pyplot as plt
 
@@ -26,7 +27,10 @@ DTM = LOCAL_VARS.DTM
 length = len(gdf.index)
 
 object_ids = []
+elevations = []
 geoms = []
+lr_scores = []
+
 #%%
 for index, row in gdf.iterrows():
     print(round(index / length * 100, 2))
@@ -52,20 +56,63 @@ for index, row in gdf.iterrows():
                 previous_vert.coords[0], vert.coords[0]
             )
 
-        cross = mkcross.make_crossline(vert, bearing, 15.0)
+        cross_section_line = mkcross.make_crossline(vert, bearing, 20.0)
+        cross_points = mkcross.redistribute_vertices(cross_section_line, 0.4)
+        cross_elevations = mkcross.get_heights(cross_points, DTM)
+        lr_score = wall_score.linear_regression_score(cross_elevations)
+
         object_ids.append("{0}-{1}".format(DigeID, i))
-        geoms.append(cross)
+        geoms.append(cross_section_line)
+        elevations.append(cross_elevations)
+        lr_scores.append(lr_score)
+      
 
-        # print(cross)
-        cross_points = mkcross.redistribute_vertices(cross, 0.4)
-        # print(cross_points)
-        heights = mkcross.get_heights(cross_points, DTM)
-
-data = {"OBJECTID": object_ids, "geometry": geoms}
+data = {'OBJECTID': object_ids, 'elevations': elevations, 'lr_score': lr_scores, 'geometry': geoms}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
-out_gdf.to_file("cross_sections_all_data.geojson", driver="GeoJSON")
+out_gdf.to_file("./data/aeroe_cross_sections.geojson", driver="GeoJSON")
 
 finish = time.time()
 
 print("Time Taken is {0}s".format(finish - start))
+
+
+# %%
+out_gdf
+# %%
+strings = []
+
+for i in out_gdf['elevations']:
+    strings.append(str(i))
+# %%
+strings = [str(x) for x in out_gdf['elevations']]
+# %%
+in_gdf3 = gpd.read_file('cross_sections_str.shp', crs="EPSG:25832")
+# %%
+def df_to_geojson(df, properties):
+    geojson = {'type':'FeatureCollection', 'features':[]}
+    for _, row in df.iterrows():
+        feature = {'type':'Feature',
+                   'properties':{},
+                   'geometry':{'type':'LineString',
+                               'coordinates':[]}}
+        feature['geometry']['coordinates'] = [row['geometry'].coords[0],row['geometry'].coords[1]]
+        for prop in properties:
+            feature['properties'][prop] = row[prop]
+        geojson['features'].append(feature)
+    return geojson
+
+#%%
+cols = ['OBJECTID', 'lr_score', 'elevations']
+geojson = df_to_geojson(out_gdf, cols)
+#%%
+
+output_filename = 'dataset.js'
+with open(output_filename, 'wb') as output_file:
+    json.dump(geojson, output_file, indent=2) 
+# %%
+geojson.to_file('gjsondataset.geojson', driver='GeoJSON')
+#%%
+import json
+with open('data.json', 'w') as f:
+    json.dump(str(geojson), f)
 # %%

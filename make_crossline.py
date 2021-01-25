@@ -14,7 +14,7 @@ def get_heights(points, DTM):
     xOrigin = transform[0]
     yOrigin = transform[3]
 
-    elevation = []
+    elevations = []
     for coord in points.coords:
 
         (x, y) = coord
@@ -23,9 +23,9 @@ def get_heights(points, DTM):
         py = int((yOrigin - y) / pixelHeight)
 
         data = band.ReadAsArray(px, py, 1, 1)
-        elevation.append(data[0][0])
+        elevations.append(data[0][0])
 
-    return elevation
+    return elevations
 
 
 def calculate_initial_compass_bearing(pointA, pointB):
