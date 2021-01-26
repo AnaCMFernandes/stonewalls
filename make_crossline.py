@@ -27,6 +27,33 @@ def get_heights(points, DTM):
 
     return elevations
 
+def get_heights3D(points, DTM):
+    dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
+    band = dataset.GetRasterBand(1)
+
+    transform = dataset.GetGeoTransform()
+    pixelWidth = abs(transform[1])
+    pixelHeight = abs(transform[5])
+
+    xOrigin = transform[0]
+    yOrigin = transform[3]
+
+    multipoint = []
+    for coord in points.coords:
+
+        (x, y) = coord
+
+        px = int((x - xOrigin) / pixelWidth)
+        py = int((yOrigin - y) / pixelHeight)
+
+        data = band.ReadAsArray(px, py, 1, 1)
+        z = data[0][0]
+
+        point3D = Point(x, y, z)
+        multipoint.append(point3D)
+
+    return MultiPoint(multipoint)
+
 
 def calculate_initial_compass_bearing(pointA, pointB):
     startx,starty,endx,endy=pointA[0],pointA[1],pointB[0],pointB[1]
