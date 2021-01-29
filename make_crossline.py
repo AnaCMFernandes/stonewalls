@@ -2,6 +2,9 @@ from osgeo import gdal, ogr
 import math
 import numpy as np
 from shapely.geometry import Point, LineString, MultiPoint
+import geopandas as gpd
+import LOCAL_VARS
+import wall_score
 
 def get_heights(points, DTM):
     dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
@@ -70,10 +73,12 @@ def offset_point(pt, bearing, angle, dist):
     y = pt.y + dist * math.cos(bearing)
     return Point(x, y)
 
-def make_crossline(pt, bearing, dist):
-   left = offset_point(pt, bearing, 270, (dist/2))
-   right = offset_point(pt, bearing, 90, (dist/2))
-   return LineString([left, right])
+def make_crossline(pt, bearing, dist, shift_offset=0, interval=LOCAL_VARS.PIXEL_SIZE):
+    ### move the line by the index difference between the ideal center (25) and the current center (0-50)
+    totalshift = shift_offset * interval
+    left = offset_point(pt, bearing, 270, ((dist)/2)+totalshift)
+    right = offset_point(pt, bearing, 90, ((dist)/2)-totalshift)
+    return LineString([left, right])
 
 def redistribute_vertices(geom, distance):
     if geom.geom_type == 'LineString':
@@ -90,6 +95,83 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
+def init(gdf):
+    DTM = LOCAL_VARS.DTM
+    # length = len(gdf.index)
+    object_ids = []
+    geoms = []
+    lr_scores = []
+    stonewall = []
 
 
+    for _, row in gdf.iterrows():
+        # print(round(index / length * 100, 2))
+        geometry = row["geometry"]
+        linestring = redistribute_vertices(geometry, 5)
+        coords = list(linestring.coords)
 
+        DigeID = row["DigeID"]
+
+        for i, p in enumerate(coords):
+            ## every point except for the last point will use the next point to create bearing
+            if i < len(coords) - 1:
+                vert = Point(p)
+                next_vert = Point(coords[i + 1])
+                bearing = calculate_initial_compass_bearing(
+                    vert.coords[0], next_vert.coords[0]
+                )
+            ### go between the last and the second last point 
+            if i == len(coords) - 1:
+                vert = Point(p)
+                previous_vert = Point(coords[i - 1])
+                bearing = calculate_initial_compass_bearing(
+                    previous_vert.coords[0], vert.coords[0]
+                )
+
+            # pipeline
+            cross_section_line = make_crossline(vert, bearing, 20.0)
+            cross_points = redistribute_vertices(cross_section_line, 0.4)
+            cross_points_3D = get_heights3D(cross_points, DTM)
+            highest_point = check_highest_point(cross_points_3D)
+
+            ### calculate correction
+            ideal_mid = math.floor(len(cross_points_3D)/2)
+            correction = ideal_mid - highest_point
+
+            print('ORIGINAL')
+            ### compute basic linear regression and also print plots
+            lr_score = wall_score.linear_regression_score3D(cross_points_3D)
+            
+            if correction != 0:
+                # pipeline with correction
+                cross_section_line = make_crossline(vert, bearing, 20.0, correction)
+                cross_points = redistribute_vertices(cross_section_line, 0.4)
+                cross_points_3D = get_heights3D(cross_points, DTM)
+                print('CORRECTED')
+                ### compute basic linear regression and also print plots
+                lr_score = wall_score.linear_regression_score3D(cross_points_3D)
+
+            ### push data to lists for creation of dataframe
+            object_ids.append("{0}-{1}".format(DigeID, i))
+            geoms.append(cross_points_3D)
+            lr_scores.append(lr_score)
+            
+        ### create dataframe
+        data = {'OBJECTID': object_ids, 'lr_score': lr_scores, 'geometry': geoms}
+        out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
+    return out_gdf
+
+def check_highest_point(multipoint):
+    elevs = [p.z for p in multipoint]
+    return elevs.index(max(elevs))
+
+def check_stonewall(multipoint):
+    elevs = [p.z for p in multipoint]
+
+    high = max(elevs)
+    low = min(elevs)
+    if high - low < 0.3:  return 0 
+    else: return 1
+
+
+# %%
