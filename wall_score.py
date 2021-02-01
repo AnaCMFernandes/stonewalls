@@ -40,12 +40,12 @@ def linear_regression_score3D(multipoint):
 
     prediction = LR.predict(xr)
 
-    plt.figure()
-    plt.plot(x, prediction, label="linear regression", color="b")
-    plt.scatter(x, y, label="elevations", color="g", alpha=0.7)
-    plt.title(score)
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.plot(x, prediction, label="linear regression", color="b")
+    # plt.scatter(x, y, label="elevations", color="g", alpha=0.7)
+    # plt.title(score)
+    # plt.legend()
+    # plt.show()
 
     return score
 
