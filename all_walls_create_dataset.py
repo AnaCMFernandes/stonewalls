@@ -104,7 +104,7 @@ gdf = gdf.to_crs(epsg=25832)
 
 out_gdf = mkcross.init(gdf)
 
-out_gdf.to_file("3D_cross_sections.geojson", driver="GeoJSON")
+# out_gdf.to_file("3D_cross_sections.geojson", driver="GeoJSON")
 
 finish = time.time()
 
