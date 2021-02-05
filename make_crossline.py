@@ -101,9 +101,7 @@ def init(gdf):
     object_ids = []
     geoms = []
     lr_scores = []
-    stonewall = []
-
-
+   
     for _, row in gdf.iterrows():
         # print(round(index / length * 100, 2))
         geometry = row["geometry"]

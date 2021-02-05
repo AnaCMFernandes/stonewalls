@@ -49,4 +49,15 @@ def linear_regression_score3D(multipoint):
 
     return score
 
+def plot(multipoint):
+    elevs = [p.z for p in multipoint]
 
+    x = np.arange(len(elevs))
+    y = np.array(elevs)
+
+    plt.figure()
+    plt.scatter(x, y, label="elevations", color="g", alpha=0.7)
+    plt.legend()
+    plt.show()
+
+    return True
