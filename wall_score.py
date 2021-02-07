@@ -58,14 +58,14 @@ def rise_run_to_angle(rise, run):
 def large_stonewall_test(geom):
     z = [p.z for p in geom]
     peaks, _ = signal.find_peaks(z, prominence=0.17)
-    print('++++large peaks', peaks)
+    # print('++++large peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
 def small_stonewall_test(geom):
     z = [p.z for p in geom]
     peaks, _ = signal.find_peaks(z, prominence=0.10)
-    print('---small peaks', peaks)
+    # print('---small peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
@@ -74,7 +74,6 @@ def earthwall_test(geom):
     y = [p.z for p in geom]
     ## steps in x direction
     x = list(np.arange(0, 20.01, step=0.4))
-
     coords = []
     for i in range(len(y)):
         coord = (x[i], y[i])
@@ -93,7 +92,8 @@ def earthwall_test(geom):
 
     new_x = np.array([p.x for p in new_geom])
     new_z = np.array([p.y for p in new_geom])
-    only_plot(new_geom, color='red')
+
+    # only_plot(new_geom, color='red')
     
     peaks, _ = signal.find_peaks(new_z, prominence=0.2)
     if (len(peaks) > 0):
@@ -180,7 +180,7 @@ gdf = gpd.read_file('data/3D_cross_sections.geojson')
 
 
 sub_gdf = gdf[
-    280:300]
+    0:500]
 
 ids = []
 geometries = []
@@ -191,8 +191,11 @@ for _, row in sub_gdf.iterrows():
     obj_id = row['OBJECTID']
     geom = row['geometry']
 
-    print(wall_tests(geom))
-    only_plot(geom)
+    result = wall_tests(geom)
+    print(result)
+    if result in ['no_wall']:
+        only_plot(geom)
+
 
 
       
