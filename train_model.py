@@ -63,12 +63,13 @@ from scipy import signal
 
 gdf = gpd.read_file('data/3D_cross_sections.geojson')
 #%%
+from shapely import affinity
 import scipy
 from sklearn import linear_model as LinearRegression
 from sklearn.utils.extmath import safe_sparse_dot
 
 sub_gdf = gdf[
-    :10]
+    :100]
 
 
 def linear_regression_score3D(multipoint):
@@ -110,14 +111,9 @@ def pnt_from_rtn_arnd_orgn(point, origin, angle):
    return [nx, ny]
 
 
-def angle(point1, point2):
-   p1 = {'x': point1[0], 'y': point1[1]}
-   p2 = {'x': point2[0],'y': point2[1]}
-   dx = p2['x'] - p1['x']
-   dy = p2['y'] - p1['y']
-
-   return math.atan2(dy, dx)
-
+def rise_run_to_angle(rise, run):
+   return math.degrees(math.atan(rise/run))
+trash = []
 for _, row in sub_gdf.iterrows():
    geometry = row['geometry']
    elevs = [x.z for x in geometry]
@@ -127,40 +123,120 @@ for _, row in sub_gdf.iterrows():
       pair = (steps[i], elevs[i])
       profile_coords.append(pair)
    # scipy.signal.find_peaks(x, height=None, threshold=None, distance=None, prominence=None, width=None, wlen=None, rel_height=0.5, plateau_size=None)
-   # peaks, _ = scipy.signal.find_peaks(elevs, prominence=0.17)
+   peaks, _ = scipy.signal.find_peaks(elevs, prominence=0.17)
 
-   # print(peaks)    
-   # if len(peaks) != 1: wall_score.plot(geometry)
-   wall_score.plot(geometry)
+   if len(peaks) != 1: wall_score.plot(geometry)
 
    #### calculate rotations and transformation
    formula = linear_regression_score3D(geometry)
-   step = 0.4
-   origin = (0, formula[1])
-   point2 = (step, formula[1] + (step * formula[0][0]))
-   rotation = angle(origin, point2)
-
-   new_elevs = [pnt_from_rtn_arnd_orgn(x, origin, rotation) for x in profile_coords]
-  
-   new_x = [p[0] for p in new_elevs]
-   new_y = [p[1] for p in new_elevs]
-   plt.figure()
-   plt.scatter(new_x, new_y)
-   plt.show()
-
    
+   rise = formula[0][0]
+   step = 0.4
+
+   rotation = rise_run_to_angle(rise, step)
+  
+   new_geom = affinity.rotate(MultiPoint(profile_coords), -rotation, origin = origin)
+
+   new_x = np.array([p.x for p in new_geom])
+   new_y = np.array([p.y for p in new_geom])
+  
+   if len(peaks) != 1: 
+      print(len(peaks))
+      plt.figure()
+      plt.scatter(new_x, new_y)
+
+      LR1 = LinearRegression.LinearRegression()
+
+      new_xr = new_x.reshape(-1, 1)
+
+      LR1.fit(new_xr, new_y)
+      prediction = LR1.predict(new_xr)
+      plt.plot(new_xr, prediction)
+      plt.show()
+      count =+ 1
+      trash.append(1)
+print(len(trash))
 # %%
-# def radian_angle(vector_1, vector_2):
-#    unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
-#    unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
-#    dot_product = np.dot(unit_vector_1, unit_vector_2)
-#    angle = np.arccos(dot_product)
-#    return angle
 
-vector1 = (0, 1)
-vector2 = (1, 0)
+# from osgeo import gdal, ogr
+# import os
+# import math
+# import numpy as np
+# import geopandas as gpd
+# from osgeo import gdal, ogr
+# import sys, math
+# import numpy as np
+# from shapely.geometry import Point, LineString, MultiPoint
+# import geopandas as gpd
+# import matplotlib.pyplot as plt
+# import LOCAL_VARS
+# import make_crossline as mkcross
+# import wall_score
+# from scipy import signal
 
-radian_angle(origin, point2)
+# import scipy
+# from sklearn import linear_model as LinearRegression
+# from sklearn.utils.extmath import safe_sparse_dot
+
+# from shapely import affinity
 
 
-# %%
+# x = np.array([0,1, 2, 3, 4, 5])
+# y = np.array([0,1, 2, 3, 4, 5])
+# plt.figure()
+# plt.scatter(x, y)
+
+# coords = []
+# for i in range(len(y)):
+#    pair = (x[i], y[i])
+#    coords.append(pair)
+
+# xr = x.reshape(-1, 1)
+
+# LR = LinearRegression.LinearRegression()
+# LR.fit(xr, y)
+
+#    #### calculate rotations and transformation
+# formula = (LR.coef_, LR.intercept_)
+ 
+# print(formula)
+# origin = (0, formula[1])
+# point2 = (step, formula[1] + (step * formula[0][0]))
+# rotation = angle(origin, point2)
+
+# print(origin, point2)
+
+# # new_elevs = [pnt_from_rtn_arnd_orgn(x, origin, rotation) for x in coords]
+# my_geom = MultiPoint(coords)
+# rotation = math.degrees(rotation)
+# rotated_geom = affinity.rotate(my_geom, -rotation, origin=origin)
+# print('rotation', rotation)
+# print(my_geom)
+# print(rotated_geom)
+# new_x = [p.x for p in rotated_geom]
+# new_y = [p.y for p in rotated_geom]
+# plt.figure()
+# plt.scatter(new_x, new_y)
+# LR1 = LinearRegression.LinearRegression()
+# new_xr = x.reshape(-1, 1)
+# LR1.fit(new_xr, new_y)
+# prediction = LR1.predict(new_xr)
+# plt.plot(prediction, y)
+# plt.show()
+# # %%
+# coords
+# rotated = rotate(my_geom, 90)
+# new_x = [p.x for p in rotated]
+# new_y = [p.y for p in rotated]
+# plt.figure()
+# plt.scatter(new_x, new_y)
+# plt.show()
+# # %%
+
+if test1 promincence 1.7 catch big stonewalls
+
+if test2 promincence 0.5 catch small stonewalls
+
+if test3 rotate and find peaks caetch jorddige
+
+else  not
