@@ -69,7 +69,7 @@ from sklearn import linear_model as LinearRegression
 from sklearn.utils.extmath import safe_sparse_dot
 
 sub_gdf = gdf[
-    :100]
+    :200]
 
 
 def linear_regression_score3D(multipoint):
@@ -113,7 +113,7 @@ def pnt_from_rtn_arnd_orgn(point, origin, angle):
 
 def rise_run_to_angle(rise, run):
    return math.degrees(math.atan(rise/run))
-trash = []
+
 for _, row in sub_gdf.iterrows():
    geometry = row['geometry']
    elevs = [x.z for x in geometry]
@@ -153,9 +153,9 @@ for _, row in sub_gdf.iterrows():
       prediction = LR1.predict(new_xr)
       plt.plot(new_xr, prediction)
       plt.show()
-      count =+ 1
-      trash.append(1)
-print(len(trash))
+      
+      
+
 # %%
 
 # from osgeo import gdal, ogr
@@ -233,9 +233,9 @@ print(len(trash))
 # plt.show()
 # # %%
 
-if test1 promincence 1.7 catch big stonewalls
+if test1 promincence 1.7 catch big stonewalls 1
 
-if test2 promincence 0.5 catch small stonewalls
+if test2 promincence 0.5 catch small stonewalls small
 
 if test3 rotate and find peaks caetch jorddige
 
