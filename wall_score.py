@@ -56,20 +56,20 @@ def rise_run_to_angle(rise, run):
    return math.degrees(math.atan(rise/run))
 
 def large_wall_test(geom):
-    peaks = mkcross.large_peaks_finder(geom)
+    peaks = large_peaks_finder(geom)
     # print('++++large peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
 def small_wall_test(geom):
-    peaks = mkcross.small_peaks_finder(geom)
+    peaks = small_peaks_finder(geom)
     # print('---small peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
 def onesided_wall_test(geom):
     ##elevations
-    peaks = mkcross.onesided_peaks_finder(geom)
+    peaks = onesided_peaks_finder(geom)
     if (len(peaks) > 0):
         return True
     else: return False
@@ -233,4 +233,6 @@ for _, row in gdf.iterrows():
 data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
+
+
 # %%
