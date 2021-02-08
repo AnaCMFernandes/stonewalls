@@ -3,3 +3,4 @@ data/
 data/3D_cross_sections.geojson
 data/data.geojson
 *.geojson
+negatives.py

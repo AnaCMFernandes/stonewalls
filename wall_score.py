@@ -55,58 +55,31 @@ def only_plot(geom, title='', color='green'):
 def rise_run_to_angle(rise, run):
    return math.degrees(math.atan(rise/run))
 
-def large_stonewall_test(geom):
-    z = [p.z for p in geom]
-    peaks, _ = signal.find_peaks(z, prominence=0.17)
+def large_wall_test(geom):
+    peaks = mkcross.large_peaks_finder(geom)
     # print('++++large peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
-def small_stonewall_test(geom):
-    z = [p.z for p in geom]
-    peaks, _ = signal.find_peaks(z, prominence=0.10)
+def small_wall_test(geom):
+    peaks = mkcross.small_peaks_finder(geom)
     # print('---small peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
-def earthwall_test(geom):
+def onesided_wall_test(geom):
     ##elevations
-    y = [p.z for p in geom]
-    ## steps in x direction
-    x = list(np.arange(0, 20.01, step=0.4))
-    coords = []
-    for i in range(len(y)):
-        coord = (x[i], y[i])
-        coords.append(coord)
-
-    #### calculate rotations and transformation
-    rise, intercept = linear_regression_score3D(geom)
-
-    origin = (0,intercept)
-
-    run = 0.4
-
-    rotation = rise_run_to_angle(rise, run)
-
-    new_geom = affinity.rotate(MultiPoint(coords), -rotation, origin = origin)
-
-    new_x = np.array([p.x for p in new_geom])
-    new_z = np.array([p.y for p in new_geom])
-
-    # only_plot(new_geom, color='red')
-    
-    peaks, _ = signal.find_peaks(new_z, prominence=0.12)
+    peaks = mkcross.onesided_peaks_finder(geom)
     if (len(peaks) > 0):
         return True
     else: return False
-
     return True
 
 def wall_tests(geom):
-    if large_stonewall_test(geom): return 'large_stonewall'
-    if small_stonewall_test(geom): return 'small_stonewall'
-    if earthwall_test(geom): return 'earthwall'
-    else: return 'no_wall'
+    if large_wall_test(geom): return '1'
+    if small_wall_test(geom): return '2'
+    if onesided_wall_test(geom): return '3'
+    else: return '0'
 
 def no_wall_test(geom):
     return True
@@ -128,6 +101,51 @@ def pnt_from_rtn_arnd_orgn(point, origin, angle):
    ny = (cos * dy) - (sin * dx) + o['y']
 
    return [nx, ny]
+
+
+def large_peaks_finder(geom):
+    z = [p.z for p in geom]
+    ### TODO change here for adjustment
+    peaks, _ = signal.find_peaks(z, prominence=0.17)
+    return peaks
+def small_peaks_finder(geom):
+    z = [p.z for p in geom]
+    ### TODO change here for adjustment
+    peaks, _ = signal.find_peaks(z, prominence=0.10)
+    return peaks
+
+def onesided_peaks_finder(geom):
+    z = [p.z for p in geom]
+    ## steps in x direction
+    x = list(np.arange(0, 20.01, step=0.4))
+    coords = []
+    for i in range(len(z)):
+        coord = (x[i], z[i])
+        coords.append(coord)
+
+    #### calculate rotations and transformation
+    rise, intercept = linear_regression_score3D(geom)
+
+    origin = (0,intercept)
+
+    run = 0.4
+
+    rotation = rise_run_to_angle(rise, run)
+
+    new_geom = affinity.rotate(MultiPoint(coords), -rotation, origin = origin)
+
+    new_x = np.array([p.x for p in new_geom])
+    new_z = np.array([p.y for p in new_geom])
+    ### TODO change here for adjustment
+    peaks, _ = signal.find_peaks(new_z, prominence=0.12)
+    return peaks
+
+
+def find_wall_peak(geom):
+    large_peaks = large_peaks_finder(geom)
+    small_peaks = small_peaks_finder(geom)
+    onesided_peaks = onesided_peaks_finder(geom)
+    
 
 def normalise():
     # sbst_gdf = gdf[:500]
@@ -180,25 +198,39 @@ gdf = gpd.read_file('data/3D_cross_sections.geojson')
 
 
 sub_gdf = gdf[
-    5500:6500]
+    100:200]
 
 ids = []
 geometries = []
 types = []
 # count = 0
-for _, row in sub_gdf.iterrows():
+for _, row in gdf.iterrows():
 
     obj_id = row['OBJECTID']
-    geom = row['geometry']
+    geometry = row['geometry']
 
-    result = wall_tests(geom)
-    print(result)
-    if result == 'no_wall':
-        # count += 1
-        only_plot(geom, color='blue')
-    if result == 'earthwall':
-        only_plot(geom, color='orange')
+    result = wall_tests(geometry)
+
+    ids.append(obj_id)
+    geometries.append(geometry)
+    types.append(result)
+
+    # print(result)
+    # if result == 'large_stonewall':
+    #     only_plot(geometry, color='green')
+    # if result == 'small_stonewall':
+    #     only_plot(geometry, color='yellow')
+    # if result == 'no_wall':
+    #     only_plot(geometry, color='blue')
+    # if result == 'earthwall':
+    #     only_plot(geometry, color='orange')
 
 
 
+
+
+# %%
+data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
+out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
+out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
 # %%
