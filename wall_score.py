@@ -95,7 +95,7 @@ def earthwall_test(geom):
 
     # only_plot(new_geom, color='red')
     
-    peaks, _ = signal.find_peaks(new_z, prominence=0.2)
+    peaks, _ = signal.find_peaks(new_z, prominence=0.12)
     if (len(peaks) > 0):
         return True
     else: return False
@@ -180,12 +180,12 @@ gdf = gpd.read_file('data/3D_cross_sections.geojson')
 
 
 sub_gdf = gdf[
-    0:500]
+    5500:6500]
 
 ids = []
 geometries = []
 types = []
-
+# count = 0
 for _, row in sub_gdf.iterrows():
 
     obj_id = row['OBJECTID']
@@ -193,10 +193,12 @@ for _, row in sub_gdf.iterrows():
 
     result = wall_tests(geom)
     print(result)
-    if result in ['no_wall']:
-        only_plot(geom)
+    if result == 'no_wall':
+        # count += 1
+        only_plot(geom, color='blue')
+    if result == 'earthwall':
+        only_plot(geom, color='orange')
 
 
 
-      
 # %%
