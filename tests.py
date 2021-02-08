@@ -463,13 +463,13 @@ for _, row in gdf.iterrows():
 
     # print(result)
     # if result == 'large_stonewall':
-    #     only_plot(geometry, color='green')
+    #     just_plot(geometry, color='green')
     # if result == 'small_stonewall':
-    #     only_plot(geometry, color='yellow')
+    #     just_plot(geometry, color='yellow')
     # if result == 'no_wall':
-    #     only_plot(geometry, color='blue')
+    #     just_plot(geometry, color='blue')
     # if result == 'earthwall':
-    #     only_plot(geometry, color='orange')
+    #     just_plot(geometry, color='orange')
 
 
 

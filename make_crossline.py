@@ -8,30 +8,6 @@ import LOCAL_VARS
 import wall_score
 from scipy import signal
 
-def get_heights(points, DTM):
-    dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
-    band = dataset.GetRasterBand(1)
-
-    transform = dataset.GetGeoTransform()
-    pixelWidth = abs(transform[1])
-    pixelHeight = abs(transform[5])
-
-    xOrigin = transform[0]
-    yOrigin = transform[3]
-
-    elevations = []
-    for coord in points.coords:
-
-        (x, y) = coord
-
-        px = int((x - xOrigin) / pixelWidth)
-        py = int((yOrigin - y) / pixelHeight)
-
-        data = band.ReadAsArray(px, py, 1, 1)
-        elevations.append(data[0][0])
-
-    return elevations
-
 def get_heights3D(points, DTM):
     dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
     band = dataset.GetRasterBand(1)
@@ -117,18 +93,12 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
-def check_stonewall(multipoint):
-    elevs = [p.z for p in multipoint]
-    high = max(elevs)
-    low = min(elevs)
-    if high - low < 0.3:  return 0 
-    else: return 1
-
 def init(gdf):
     DTM = LOCAL_VARS.DTM
     # length = len(gdf.index)
     object_ids = []
     geoms = []
+    types = []
    
     for _, row in gdf.iterrows():
         # print(round(index / length * 100, 2))
@@ -137,7 +107,6 @@ def init(gdf):
         coords = list(linestring.coords)
 
         DigeID = row["DigeID"]
-        types = []
 
         for i, p in enumerate(coords):
             ## every point except for the last point will use the next point to create bearing
@@ -160,7 +129,7 @@ def init(gdf):
             cross_points = redistribute_vertices(cross_section_line, 0.4)
             cross_points_3D = get_heights3D(cross_points, DTM)
 
-            wall_score.only_plot(cross_points_3D, 'black')
+            # wall_score.just_plot(cross_points_3D, 'black')
 
             peak, wall_type = wall_score.find_wall_peak(cross_points_3D)
 
@@ -192,23 +161,26 @@ def init(gdf):
                 cross_points_3D = get_heights3D(cross_points, DTM)
              
                 
-                if (wall_type=='1'):     
-                    wall_score.only_plot(cross_points_3D, 'green')
-                if (wall_type=='2'):     
-                    wall_score.only_plot(cross_points_3D, 'orange')
-                if (wall_type=='3'):     
-                    wall_score.only_plot(cross_points_3D, 'red')
-                if (wall_type=='0'):     
-                    wall_score.only_plot(cross_points_3D, 'blue')
+            # if (wall_type=='1'):     
+                # wall_score.just_plot(cross_points_3D, 'green')
+            # elif (wall_type=='2'):     
+                # wall_score.just_plot(cross_points_3D, 'orange')
+            # elif (wall_type=='3'):     
+                # wall_score.just_plot(cross_points_3D, 'red')
+            # else:     
+                # wall_score.just_plot(cross_points_3D, 'blue')
 
-                
                 ### compute basic linear regression and also print plots
                 
             ### push data to lists for creation of dataframe
             object_ids.append("{0}-{1}".format(DigeID, i))
             geoms.append(cross_points_3D)
             types.append(wall_type)
-           
+            # print('BREAK')
+            # print(len(object_ids))
+            # print(len(geoms))
+            # print(len(types))
+
         ### create dataframe
         data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
         out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
