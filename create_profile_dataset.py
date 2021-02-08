@@ -102,6 +102,8 @@ start = time.time()
 gdf = gpd.read_file(LOCAL_VARS.STONEWALLS)
 gdf = gdf.to_crs(epsg=25832)
 
+gdf = gdf[:10]
+
 out_gdf = mkcross.init(gdf)
 
 # out_gdf.to_file("3D_cross_sections.geojson", driver="GeoJSON")
@@ -109,10 +111,6 @@ out_gdf = mkcross.init(gdf)
 finish = time.time()
 
 print("Time Taken is {0}s".format(finish - start))
-
-
-
-
 
 
 

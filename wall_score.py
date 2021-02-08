@@ -1,4 +1,4 @@
-#%%
+
 import sklearn.linear_model as LinearRegression
 import numpy as np
 from matplotlib import pyplot as plt
@@ -36,7 +36,7 @@ def linear_regression_score3D(geom):
 
     return (slope, intercept)
 ## set to work for multipoint
-def only_plot(geom, title='', color='green'):
+def only_plot(geom, color='green', title=''):
     try:
         elevs = [p.z for p in geom]
     except:
@@ -48,6 +48,7 @@ def only_plot(geom, title='', color='green'):
     plt.figure()
     plt.scatter(x, y, label="elevations", color=color, alpha=0.7)
     plt.title(title)
+    plt.yticks(np.arange(1.5,step=0.2))
     plt.legend()
     plt.show()
     return True
@@ -102,16 +103,15 @@ def pnt_from_rtn_arnd_orgn(point, origin, angle):
 
    return [nx, ny]
 
-
 def large_peaks_finder(geom):
     z = [p.z for p in geom]
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.17)
+    peaks, _ = signal.find_peaks(z, prominence=0.20)
     return peaks
 def small_peaks_finder(geom):
     z = [p.z for p in geom]
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.10)
+    peaks, _ = signal.find_peaks(z, prominence=0.14)
     return peaks
 
 def onesided_peaks_finder(geom):
@@ -143,10 +143,21 @@ def onesided_peaks_finder(geom):
 
 def find_wall_peak(geom):
     large_peaks = large_peaks_finder(geom)
+    if (len(large_peaks) > 0):
+        print('large peak')
+        return (large_peaks, '1')
     small_peaks = small_peaks_finder(geom)
+    if (len(small_peaks) > 0):
+        print('small peak')
+        return (small_peaks, '2')
     onesided_peaks = onesided_peaks_finder(geom)
+    if (len(onesided_peaks) > 0):
+        print('onesided peak')
+        return (onesided_peaks, '3')
+    else:
+        print('no wall no peak no chance')
+        return ([], '0')
     
-
 def normalise():
     # sbst_gdf = gdf[:500]
 
@@ -170,69 +181,3 @@ def normalise():
 # scipy.signal.find_peaks(x, height=None, threshold=None, distance=None, prominence=None, width=None, wlen=None, rel_height=0.5, plateau_size=None)
     return True
 
-#%%
-from osgeo import gdal, ogr
-import os
-import math
-import numpy as np
-import geopandas as gpd
-from osgeo import gdal, ogr
-import sys, math
-import numpy as np
-from shapely.geometry import Point, LineString, MultiPoint
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import LOCAL_VARS
-import make_crossline as mkcross
-import wall_score
-from scipy import signal
-from shapely import affinity
-import scipy
-from sklearn import linear_model as LinearRegression
-from sklearn.utils.extmath import safe_sparse_dot
-
-
-gdf = gpd.read_file('data/3D_cross_sections.geojson')
-
-#%%
-
-
-sub_gdf = gdf[
-    100:200]
-
-ids = []
-geometries = []
-types = []
-# count = 0
-for _, row in gdf.iterrows():
-
-    obj_id = row['OBJECTID']
-    geometry = row['geometry']
-
-    result = wall_tests(geometry)
-
-    ids.append(obj_id)
-    geometries.append(geometry)
-    types.append(result)
-
-    # print(result)
-    # if result == 'large_stonewall':
-    #     only_plot(geometry, color='green')
-    # if result == 'small_stonewall':
-    #     only_plot(geometry, color='yellow')
-    # if result == 'no_wall':
-    #     only_plot(geometry, color='blue')
-    # if result == 'earthwall':
-    #     only_plot(geometry, color='orange')
-
-
-
-
-
-# %%
-data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
-out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
-out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
-
-
-# %%

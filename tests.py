@@ -9,9 +9,6 @@ from shapely.ops import unary_union, substring
 import matplotlib.pyplot as plt
 import sys, math
 from LOCAL_VARS import DTM, STONEWALLS
-import geo.sphere
-from getHeights import getHeights
-from crossSection import redistribute_vertices
 import make_crossline as mkcross
 
 import time
@@ -420,3 +417,66 @@ data = {'OBJECTID': object_ids, 'geometry': geoms}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("cross_sections_test.geojson", driver='GeoJSON')
 # %%
+from osgeo import gdal, ogr
+import os
+import math
+import numpy as np
+import geopandas as gpd
+from osgeo import gdal, ogr
+import sys, math
+import numpy as np
+from shapely.geometry import Point, LineString, MultiPoint
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import LOCAL_VARS
+import make_crossline as mkcross
+import wall_score
+from scipy import signal
+from shapely import affinity
+import scipy
+from sklearn import linear_model as LinearRegression
+from sklearn.utils.extmath import safe_sparse_dot
+
+
+gdf = gpd.read_file('data/3D_cross_sections.geojson')
+
+#%%
+
+
+sub_gdf = gdf[
+    100:200]
+
+ids = []
+geometries = []
+types = []
+# count = 0
+for _, row in gdf.iterrows():
+
+    obj_id = row['OBJECTID']
+    geometry = row['geometry']
+
+    result = wall_tests(geometry)
+
+    ids.append(obj_id)
+    geometries.append(geometry)
+    types.append(result)
+
+    # print(result)
+    # if result == 'large_stonewall':
+    #     only_plot(geometry, color='green')
+    # if result == 'small_stonewall':
+    #     only_plot(geometry, color='yellow')
+    # if result == 'no_wall':
+    #     only_plot(geometry, color='blue')
+    # if result == 'earthwall':
+    #     only_plot(geometry, color='orange')
+
+
+
+
+
+# %%
+data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
+out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
+out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
+

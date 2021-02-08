@@ -44,6 +44,11 @@ def get_heights3D(points, DTM):
     yOrigin = transform[3]
 
     multipoint = []
+
+    x_list = []
+    y_list = []
+    z_list = []
+
     for coord in points.coords:
 
         (x, y) = coord
@@ -54,8 +59,23 @@ def get_heights3D(points, DTM):
         data = band.ReadAsArray(px, py, 1, 1)
         z = data[0][0]
 
-        point3D = Point(x, y, z)
+        x_list.append(x) 
+        y_list.append(y) 
+        z_list.append(z)
+
+        # point3D = Point(x, y, z)
+        # multipoint.append(point3D)
+
+    lowest_point = min(z_list)
+    corrected_z_list = [z - lowest_point for z in z_list]
+
+    ###
+    # make multipoint from x_list, y_list, and corrected_z
+
+    for i in range(len(x_list)):
+        point3D = (x_list[i], y_list[i], corrected_z_list[i])
         multipoint.append(point3D)
+    
 
     return MultiPoint(multipoint)
 
@@ -97,12 +117,18 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
+def check_stonewall(multipoint):
+    elevs = [p.z for p in multipoint]
+    high = max(elevs)
+    low = min(elevs)
+    if high - low < 0.3:  return 0 
+    else: return 1
+
 def init(gdf):
     DTM = LOCAL_VARS.DTM
     # length = len(gdf.index)
     object_ids = []
     geoms = []
-    lr_scores = []
    
     for _, row in gdf.iterrows():
         # print(round(index / length * 100, 2))
@@ -111,6 +137,7 @@ def init(gdf):
         coords = list(linestring.coords)
 
         DigeID = row["DigeID"]
+        types = []
 
         for i, p in enumerate(coords):
             ## every point except for the last point will use the next point to create bearing
@@ -132,105 +159,58 @@ def init(gdf):
             cross_section_line = make_crossline(vert, bearing, 20.0)
             cross_points = redistribute_vertices(cross_section_line, 0.4)
             cross_points_3D = get_heights3D(cross_points, DTM)
-            highest_point = check_highest_point(cross_points_3D)
+
+            wall_score.only_plot(cross_points_3D, 'black')
+
+            peak, wall_type = wall_score.find_wall_peak(cross_points_3D)
 
             ### calculate correction
             ideal_mid = math.floor(len(cross_points_3D)/2)
-            correction = ideal_mid - highest_point
+           
+            ## if there are multiple peaks, then take the peak that is closest to the center.
+            if (len(peak) > 1):
+                curr_closest = -1
+                closest_value = 50
+                for peak in peak:
+                    diff = abs(peak - ideal_mid)
+                    if (diff < closest_value):
+                        closest_value = diff
+                        curr_closest = peak
+                
+                peak = curr_closest
+            elif (len(peak) == 0): peak = ideal_mid
 
-            print('ORIGINAL')
-            ### compute basic linear regression and also print plots
-            lr_score = wall_score.linear_regression_score3D(cross_points_3D)
             
+            correction = ideal_mid - peak
+
+            ### compute basic linear regression and also print plots
+             
             if correction != 0:
                 # pipeline with correction
                 cross_section_line = make_crossline(vert, bearing, 20.0, correction)
                 cross_points = redistribute_vertices(cross_section_line, 0.4)
                 cross_points_3D = get_heights3D(cross_points, DTM)
-                print('CORRECTED')
-                ### compute basic linear regression and also print plots
-                lr_score = wall_score.linear_regression_score3D(cross_points_3D)
+             
+                
+                if (wall_type=='1'):     
+                    wall_score.only_plot(cross_points_3D, 'green')
+                if (wall_type=='2'):     
+                    wall_score.only_plot(cross_points_3D, 'orange')
+                if (wall_type=='3'):     
+                    wall_score.only_plot(cross_points_3D, 'red')
+                if (wall_type=='0'):     
+                    wall_score.only_plot(cross_points_3D, 'blue')
 
+                
+                ### compute basic linear regression and also print plots
+                
             ### push data to lists for creation of dataframe
             object_ids.append("{0}-{1}".format(DigeID, i))
             geoms.append(cross_points_3D)
-            lr_scores.append(lr_score)
-            
+            types.append(wall_type)
+           
         ### create dataframe
-        data = {'OBJECTID': object_ids, 'lr_score': lr_scores, 'geometry': geoms}
+        data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
         out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
     return out_gdf
 
-def check_stonewall(multipoint):
-    elevs = [p.z for p in multipoint]
-    high = max(elevs)
-    low = min(elevs)
-    if high - low < 0.3:  return 0 
-    else: return 1
-
-
-
-
-
-
-# def init(gdf):
-#     DTM = LOCAL_VARS.DTM
-#     # length = len(gdf.index)
-#     object_ids = []
-#     geoms = []
-   
-#     for _, row in gdf.iterrows():
-#         # print(round(index / length * 100, 2))
-#         geometry = row["geometry"]
-#         linestring = redistribute_vertices(geometry, 5)
-#         coords = list(linestring.coords)
-
-#         DigeID = row["DigeID"]
-#         types = []
-
-#         for i, p in enumerate(coords):
-#             ## every point except for the last point will use the next point to create bearing
-#             if i < len(coords) - 1:
-#                 vert = Point(p)
-#                 next_vert = Point(coords[i + 1])
-#                 bearing = calculate_initial_compass_bearing(
-#                     vert.coords[0], next_vert.coords[0]
-#                 )
-#             ### go between the last and the second last point 
-#             if i == len(coords) - 1:
-#                 vert = Point(p)
-#                 previous_vert = Point(coords[i - 1])
-#                 bearing = calculate_initial_compass_bearing(
-#                     previous_vert.coords[0], vert.coords[0]
-#                 )
-
-#             # pipeline
-#             cross_section_line = make_crossline(vert, bearing, 20.0)
-#             cross_points = redistribute_vertices(cross_section_line, 0.4)
-#             cross_points_3D = get_heights3D(cross_points, DTM)
-#             peak = find_wall_peak(cross_points_3D)
-
-#             ### calculate correction
-#             ideal_mid = math.floor(len(cross_points_3D)/2)
-#             correction = ideal_mid - peak
-
-#             print('ORIGINAL')
-#             ### compute basic linear regression and also print plots
-             
-#             if correction != 0:
-#                 # pipeline with correction
-#                 cross_section_line = make_crossline(vert, bearing, 20.0, correction)
-#                 cross_points = redistribute_vertices(cross_section_line, 0.4)
-#                 cross_points_3D = get_heights3D(cross_points, DTM)
-#                 print('CORRECTED')
-#                 ### compute basic linear regression and also print plots
-                
-#             ### push data to lists for creation of dataframe
-#             object_ids.append("{0}-{1}".format(DigeID, i))
-#             geoms.append(cross_points_3D)
-           
-            
-#         ### create dataframe
-#         data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
-#         out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
-#     return out_gdf
