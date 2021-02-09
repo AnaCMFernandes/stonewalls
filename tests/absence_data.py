@@ -3,7 +3,6 @@ import os
 import math
 import numpy as np
 import sys, math
-import LOCAL_VARS
 import geopandas as gpd
 from shapely.geometry import Polygon, Point, LineString
 from shapely.affinity import translate
@@ -14,7 +13,9 @@ import wall_score
 
 import time
 
-stonewalls = gpd.read_file(LOCAL_VARS.STONEWALLS)
+path_to_file = 'data/stonewalls/aeroe/Stonewalls_AEROE.shp'
+
+stonewalls = gpd.read_file(path_to_file)
 
 # %%
 f = stonewalls[['OBJECTID', 'DigeID', 'geometry']].copy()

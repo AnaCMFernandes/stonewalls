@@ -1,34 +1,11 @@
 from osgeo import gdal, ogr
+from scipy import signal
+from shapely import affinity
+from shapely.geometry import Point, LineString, MultiPoint
 import math
 import numpy as np
-from shapely.geometry import Point, LineString, MultiPoint
 import geopandas as gpd
-import LOCAL_VARS
-import wall_score
-
-def get_heights(points, DTM):
-    dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
-    band = dataset.GetRasterBand(1)
-
-    transform = dataset.GetGeoTransform()
-    pixelWidth = abs(transform[1])
-    pixelHeight = abs(transform[5])
-
-    xOrigin = transform[0]
-    yOrigin = transform[3]
-
-    elevations = []
-    for coord in points.coords:
-
-        (x, y) = coord
-
-        px = int((x - xOrigin) / pixelWidth)
-        py = int((yOrigin - y) / pixelHeight)
-
-        data = band.ReadAsArray(px, py, 1, 1)
-        elevations.append(data[0][0])
-
-    return elevations
+from . import helpers
 
 def get_heights3D(points, DTM):
     dataset = gdal.Open(DTM, gdal.GA_ReadOnly)
@@ -42,6 +19,11 @@ def get_heights3D(points, DTM):
     yOrigin = transform[3]
 
     multipoint = []
+
+    x_list = []
+    y_list = []
+    z_list = []
+
     for coord in points.coords:
 
         (x, y) = coord
@@ -52,8 +34,23 @@ def get_heights3D(points, DTM):
         data = band.ReadAsArray(px, py, 1, 1)
         z = data[0][0]
 
-        point3D = Point(x, y, z)
+        x_list.append(x) 
+        y_list.append(y) 
+        z_list.append(z)
+
+        # point3D = Point(x, y, z)
+        # multipoint.append(point3D)
+
+    lowest_point = min(z_list)
+    corrected_z_list = [z - lowest_point for z in z_list]
+
+    ###
+    # make multipoint from x_list, y_list, and corrected_z
+
+    for i in range(len(x_list)):
+        point3D = (x_list[i], y_list[i], corrected_z_list[i])
         multipoint.append(point3D)
+    
 
     return MultiPoint(multipoint)
 
@@ -73,9 +70,11 @@ def offset_point(pt, bearing, angle, dist):
     y = pt.y + dist * math.cos(bearing)
     return Point(x, y)
 
-def make_crossline(pt, bearing, dist):
-    left = offset_point(pt, bearing, 270, (dist)/2)
-    right = offset_point(pt, bearing, 90, (dist)/2)
+def make_crossline(pt, bearing, dist, shift_offset=0, interval=0.4):
+    ### move the line by the index difference between the ideal center (25) and the current center (0-50)
+    totalshift = shift_offset * interval
+    left = offset_point(pt, bearing, 270, ((dist)/2)+totalshift)
+    right = offset_point(pt, bearing, 90, ((dist)/2)-totalshift)
     return LineString([left, right])
 
 def redistribute_vertices(geom, distance):
@@ -93,15 +92,12 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
-def init(gdf):
-    DTM = LOCAL_VARS.DTM
+def init(gdf, DTM):
     length = len(gdf.index)
     object_ids = []
     geoms = []
-    lr_scores = []
-    stonewall = []
-
-
+    types = []
+   
     for index, row in gdf.iterrows():
         print(round(index / length * 100, 2))
         geometry = row["geometry"]
@@ -130,33 +126,54 @@ def init(gdf):
             cross_section_line = make_crossline(vert, bearing, 20.0)
             cross_points = redistribute_vertices(cross_section_line, 0.4)
             cross_points_3D = get_heights3D(cross_points, DTM)
-            highest_point = check_highest_point(cross_points_3D)
 
-            #print('ORIGINAL')
-            ### compute basic linear regression and also print plots
-            lr_score = wall_score.linear_regression_score3D(cross_points_3D)
+            # helpers.just_plot(cross_points_3D, 'black')
 
+            peak, wall_type = helpers.find_wall_peak(cross_points_3D)
+
+            ### calculate correction
+            ideal_mid = math.floor(len(cross_points_3D)/2)
+           
+            ## if there are multiple peaks, then take the peak that is closest to the center.
+            if (len(peak) > 1):
+                curr_closest = -1
+                closest_value = 50
+                for peak in peak:
+                    diff = abs(peak - ideal_mid)
+                    if (diff < closest_value):
+                        closest_value = diff
+                        curr_closest = peak
+                
+                peak = curr_closest
+            elif (len(peak) == 0): peak = ideal_mid
+
+            correction = ideal_mid - peak
+
+            if correction != 0:
+                # pipeline with correction
+                cross_section_line = make_crossline(vert, bearing, 20.0, correction)
+                cross_points = redistribute_vertices(cross_section_line, 0.4)
+                cross_points_3D = get_heights3D(cross_points, DTM)
+             
+            ### plot walltypes for visual inspection
+            # if (wall_type=='1'):     
+                # helpers.just_plot(cross_points_3D, 'green')
+            # elif (wall_type=='2'):     
+                # helpers.just_plot(cross_points_3D, 'orange')
+            # elif (wall_type=='3'):     
+                # helpers.just_plot(cross_points_3D, 'red')
+            # else:     
+                # helpers.just_plot(cross_points_3D, 'blue')
+
+               
+                
             ### push data to lists for creation of dataframe
             object_ids.append("{0}-{1}".format(DigeID, i))
             geoms.append(cross_points_3D)
-            lr_scores.append(lr_score)
-            
+            types.append(wall_type)
+           
         ### create dataframe
-        data = {'OBJECTID': object_ids, 'lr_score': lr_scores, 'geometry': geoms}
+        data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
         out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
     return out_gdf
 
-def check_highest_point(multipoint):
-    elevs = [p.z for p in multipoint]
-    return elevs.index(max(elevs))
-
-def check_stonewall(multipoint):
-    elevs = [p.z for p in multipoint]
-
-    high = max(elevs)
-    low = min(elevs)
-    if high - low < 0.3:  return 0 
-    else: return 1
-
-
-# %%

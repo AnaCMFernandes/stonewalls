@@ -1,6 +1,10 @@
-LOCAL_VARS.py
-data/
-data/3D_cross_sections.geojson
-data/data.geojson
 *.geojson
-negatives.py
+*.md5
+*.tif
+*.cpg
+*.dbf
+*.prj
+*.qpj
+*.shp
+*.shx
+*.vrt

@@ -1,8 +1,8 @@
 
 import sklearn.linear_model as LinearRegression
 import numpy as np
-from matplotlib import pyplot as plt
 import math
+from matplotlib import pyplot as plt
 from scipy import signal
 from shapely.geometry import MultiPoint
 from shapely import affinity
@@ -146,26 +146,3 @@ def find_wall_peak(geom):
     # print('no wall no peak no chance')
     return ([], '0')
     
-def normalise():
-    # sbst_gdf = gdf[:500]
-
-# for _,row in sbst_gdf.iterrows():
-#    elevs = [p.z for p in row['geometry']]
-#    average = sum(elevs) / len(elevs)
-#    nrml_elevs = [(p - average) for p in elevs]
-
-#    x = np.arange(len(nrml_elevs))
-#    y = np.array(nrml_elevs)
-
-#    peaks = signal.find_peaks(y, height=0.2)
-#    print('---peaks----')
-#    print(peaks)
-
-#    plt.figure()
-#    plt.scatter(x,y)
-#    plt.yticks(np.arange(-0.6,.6, step=0.1))
-   # plt.show()
-
-# scipy.signal.find_peaks(x, height=None, threshold=None, distance=None, prominence=None, width=None, wlen=None, rel_height=0.5, plateau_size=None)
-    return True
-
