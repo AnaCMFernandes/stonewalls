@@ -23,7 +23,7 @@ start = time.time()
 gdf = gpd.read_file(LOCAL_VARS.STONEWALLS)
 gdf = gdf.to_crs(epsg=25832)
 
-sub_gdf = gdf[10:11]
+# sub_gdf = gdf[10:11]
 
 out_gdf = mkcross.init(gdf)
 

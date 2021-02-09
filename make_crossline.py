@@ -95,13 +95,13 @@ def redistribute_vertices(geom, distance):
 
 def init(gdf):
     DTM = LOCAL_VARS.DTM
-    # length = len(gdf.index)
+    length = len(gdf.index)
     object_ids = []
     geoms = []
     types = []
    
-    for _, row in gdf.iterrows():
-        # print(round(index / length * 100, 2))
+    for index, row in gdf.iterrows():
+        print(round(index / length * 100, 2))
         geometry = row["geometry"]
         linestring = redistribute_vertices(geometry, 5)
         coords = list(linestring.coords)
@@ -149,18 +149,15 @@ def init(gdf):
                 peak = curr_closest
             elif (len(peak) == 0): peak = ideal_mid
 
-            
             correction = ideal_mid - peak
 
-            ### compute basic linear regression and also print plots
-             
             if correction != 0:
                 # pipeline with correction
                 cross_section_line = make_crossline(vert, bearing, 20.0, correction)
                 cross_points = redistribute_vertices(cross_section_line, 0.4)
                 cross_points_3D = get_heights3D(cross_points, DTM)
              
-                
+            ### plot walltypes for visual inspection
             # if (wall_type=='1'):     
                 # wall_score.just_plot(cross_points_3D, 'green')
             # elif (wall_type=='2'):     
@@ -170,17 +167,13 @@ def init(gdf):
             # else:     
                 # wall_score.just_plot(cross_points_3D, 'blue')
 
-                ### compute basic linear regression and also print plots
+               
                 
             ### push data to lists for creation of dataframe
             object_ids.append("{0}-{1}".format(DigeID, i))
             geoms.append(cross_points_3D)
             types.append(wall_type)
-            # print('BREAK')
-            # print(len(object_ids))
-            # print(len(geoms))
-            # print(len(types))
-
+           
         ### create dataframe
         data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
         out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
