@@ -480,3 +480,86 @@ data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
 
+#%%
+
+from osgeo import gdal, ogr
+import os
+import geopandas as gpd
+import sys, math
+import numpy as np
+from shapely.geometry import Point, LineString, MultiPoint
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from scipy import signal
+from shapely import affinity
+import scipy
+from sklearn import linear_model as LinearRegression
+from sklearn.utils.extmath import safe_sparse_dot
+import sys; sys.path.append('..'); sys.path.append('../lib')
+import lib.core
+import lib.helpers
+
+
+#%%
+path = "../cross_sections_test14_50.geojson"
+profiles = gpd.read_file(path)
+
+sub_profiles = profiles[0:2]
+
+def peaks_finder(geom):
+    z = [p.z for p in geom]
+    ### TODO change here for adjustment
+    peaks, properties = signal.find_peaks(z, prominence=0.17, height=(None, None))
+    return peaks, properties
+
+def find_peak_score(geom):
+    just_peaks, properties = peaks_finder(geom)
+    if (len(just_peaks) > 0):
+        #print(just_peaks)
+        #print(properties)
+        return (just_peaks, properties, '1')
+    return ([], [], '0')
+
+
+
+for _, row in sub_profiles.iterrows():   
+    z = [p.z for p in row['geometry']]
+    peak, properties, wall_score = find_peak_score(row['geometry'])
+    ideal_mid = 25
+    prominences = signal.peak_prominences(z, peak, wlen=3.1)
+    print(prominences)
+    print(z)
+    if (len(peak) > 1):
+        curr_closest = -1
+        closest_value = 50
+        for peak in peak:
+            pks = [x.z for x in row['geometry'] if x > 0.5]
+            if len(pks) > 0:
+                print('I am a stonewall!')
+                diff = abs(peak - ideal_mid)
+                low_diff = diff.min()
+                print("--> ", low_diff)
+                if (low_diff <= closest_value):
+                    closest_value = low_diff
+                    print("closest ", closest_value)
+                    curr_closest = peak
+                    print("curr ", curr_closest)
+            else: print("too low")
+        peak = curr_closest
+        print("peak is ", peak)
+    elif (len(peak) == 0): peak = ideal_mid
+
+    correction = ideal_mid - peak
+    print("the correction is: ", correction)
+
+# %%
+path_file = "cross_sections_50_tests.geojson"
+profile_corrected = gpd.read_file(path_file)
+# %%
+from lib.helpers import just_plot
+
+for _, row in profile_corrected.iterrows():   
+    z = [p.z for p in row['geometry']]
+    if row['OBJECTID'] == "12559-31":
+        just_plot(row['geometry'])
+# %%

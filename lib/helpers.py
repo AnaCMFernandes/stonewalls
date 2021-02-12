@@ -95,12 +95,13 @@ def pnt_from_rtn_arnd_orgn(point, origin, angle):
 def large_peaks_finder(geom):
     z = [p.z for p in geom]
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.30)
+    peaks, _ = signal.find_peaks(z, prominence=0.30, height=(None, None))
     return peaks
+
 def small_peaks_finder(geom):
     z = [p.z for p in geom]
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.20)
+    peaks, _ = signal.find_peaks(z, prominence=0.17, height=(None, 0.4))
     return peaks
 
 def onesided_peaks_finder(geom):
@@ -126,23 +127,23 @@ def onesided_peaks_finder(geom):
     # new_x = np.array([p.x for p in new_geom])
     new_z = np.array([p.y for p in new_geom])
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(new_z, prominence=0.20)
+    peaks, _ = signal.find_peaks(new_z, prominence=0.17, height=(None, None))
     return peaks
 
 
 def find_wall_peak(geom):
     large_peaks = large_peaks_finder(geom)
     if (len(large_peaks) > 0):
-        # print('large peak')
+        #print(large_peaks)
         return (large_peaks, '1')
-    onesided_peaks = onesided_peaks_finder(geom)
-    if (len(onesided_peaks) > 0):
-        # print('onesided peak')
-        return (onesided_peaks, '3')
     small_peaks = small_peaks_finder(geom)
     if (len(small_peaks) > 0):
-        # print('small peak')
+        #print('small peak')
         return (small_peaks, '2')
+    onesided_peaks = onesided_peaks_finder(geom)
+    if (len(onesided_peaks) > 0):
+        #print('onesided peak')
+        return (onesided_peaks, '3')
     # print('no wall no peak no chance')
     return ([], '0')
     

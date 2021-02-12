@@ -130,7 +130,7 @@ def init(gdf, DTM):
             # helpers.just_plot(cross_points_3D, 'black')
 
             peak, wall_type = helpers.find_wall_peak(cross_points_3D)
-
+            
             ### calculate correction
             ideal_mid = math.floor(len(cross_points_3D)/2)
            
@@ -143,7 +143,7 @@ def init(gdf, DTM):
                     if (diff < closest_value):
                         closest_value = diff
                         curr_closest = peak
-                
+        
                 peak = curr_closest
             elif (len(peak) == 0): peak = ideal_mid
 
