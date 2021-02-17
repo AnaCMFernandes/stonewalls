@@ -437,7 +437,6 @@ import scipy
 from sklearn import linear_model as LinearRegression
 from sklearn.utils.extmath import safe_sparse_dot
 
-
 gdf = gpd.read_file('data/3D_cross_sections.geojson')
 
 #%%
@@ -480,3 +479,8 @@ data = {'OBJECTID': ids, 'type': types, 'geometry': geometries}
 out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 out_gdf.to_file("complete_classified_cross_sections.geojson", driver="GeoJSON")
 
+#%%
+print('go away')
+# %%
+
+gdf.loc[gdf['objecctID'] in [124000, 920358239058, 125i938023. q954823590]]

@@ -1,7 +1,8 @@
 #%%
 import geopandas as gpd
 import time
-import sys; sys.path.append('..'); sys.path.append('../lib')
+import sys; sys.path.append('..')
+
 from lib.core import init
 
 path_to_stonewalls = '../data/stonewalls/aeroe/Stonewalls_AEROE.shp'
