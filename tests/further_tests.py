@@ -21,7 +21,6 @@ df['type'].value_counts()
 from shapely.geometry import MultiPoint, LineString, Point
 
 df['match'] = df['type'] == df['type'].shift()
-# df['join_for_wall'] = True if df['type'] == 3 & df['match'] == True else False
 
 lines = []
 last = (-1,-1)
@@ -37,8 +36,13 @@ for index, row in df.iterrows():
       lines.append(line)
       last = (x,y)
 
+   row['yo'] = 'whatup'
+
 print(lines)
-data = { 'geometry': lines }
-out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
+
+print(df)
+# data = { 'geometry': lines }
+
+# out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
 # %%
 out_gdf.to_file("../data/stonewalls/corrected_lines.geojson", driver="GeoJSON")
