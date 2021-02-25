@@ -16,8 +16,9 @@ input_filenames = ['stonewall_raster_10km_607_58', 'stonewall_raster_10km_607_59
 input_file = os.path.join(input_path, input_filenames[0]) + '.tif'
 
 dtm = gdal.Open(input_file)
+import pdb; pdb.set_trace()
 band = dtm.GetRasterBand(1)
-array = np.array([]
+array = np.ndarray([]
 )
 extract_patches(dtm, array)
 

@@ -8,3 +8,5 @@
 *.shp
 *.shx
 *.vrt
+data/
+data/**
