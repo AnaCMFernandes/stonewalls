@@ -1,5 +1,5 @@
 {
-   "python.pythonPath": "/home/ezra/anaconda3/envs/ml/bin/python",
+   "python.pythonPath": "/home/ezra/anaconda3/envs/stone/bin/python",
    "python.linting.pylintEnabled": true,
    "python.linting.enabled": true,
    "python.formatting.provider": "black"
