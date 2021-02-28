@@ -74,7 +74,10 @@ from tensorflow import keras
 from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
 
+model = keras.Sequential()
+
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 1)))
+# model.add(layers.GaussianNoise(1))
 model.add(layers.MaxPooling2D((2, 2), strides=(2,2), padding = "SAME"))
 model.add(layers.Conv2D(64, (3, 3), activation='relu'))
 model.add(layers.MaxPooling2D((2, 2), strides=(2,2), padding = "SAME"))

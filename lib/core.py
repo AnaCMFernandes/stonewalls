@@ -69,8 +69,13 @@ def calculate_initial_compass_bearing(pointA, pointB):
 ## get the second end point of a tick
 def offset_point(pt, bearing, angle, dist):
     bearing = math.radians(bearing + angle)
-    x = pt.x + dist * math.sin(bearing)
-    y = pt.y + dist * math.cos(bearing)
+    try:
+        x = pt.x + dist * math.sin(bearing)
+        y = pt.y + dist * math.cos(bearing)
+    except:
+        pt = Point(pt)
+        x = pt.x + dist * math.sin(bearing)
+        y = pt.y + dist * math.cos(bearing)
     return Point(x, y)
 
 def make_crossline(pt, bearing, dist, shift_offset=0, interval=0.4):
@@ -95,203 +100,165 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
-# def init(gdf, DTM):
-#     length = len(gdf.index)
-#     object_ids = []
-#     geoms = []
-#     types = []
-   
-#     for index, row in gdf.iterrows():
-#         print(round(index / length * 100, 2))
-#         geometry = row["geometry"]
-#         linestring = redistribute_vertices(geometry, 5)
-#         coords = list(linestring.coords)
-
-#         DigeID = row["DigeID"]
-
-#         for i, p in enumerate(coords):
-#             ## every point except for the last point will use the next point to create bearing
-#             if i < len(coords) - 1:
-#                 vert = Point(p)
-#                 next_vert = Point(coords[i + 1])
-#                 bearing = calculate_initial_compass_bearing(
-#                     vert.coords[0], next_vert.coords[0]
-#                 )
-#             ### go between the last and the second last point 
-#             if i == len(coords) - 1:
-#                 vert = Point(p)
-#                 previous_vert = Point(coords[i - 1])
-#                 bearing = calculate_initial_compass_bearing(
-#                     previous_vert.coords[0], vert.coords[0]
-#                 )
-
-#             # pipeline
-#             cross_section_line = make_crossline(vert, bearing, 20.0)
-#             cross_points = redistribute_vertices(cross_section_line, 0.4)
-#             cross_points_3D = get_heights3D(cross_points, DTM)
-
-#             # helpers.just_plot(cross_points_3D, 'black')
-
-#             peak, wall_type = helpers.find_wall_peak(cross_points_3D)
-            
-#             ### calculate correction
-#             ideal_mid = math.floor(len(cross_points_3D)/2)
-           
-#             ## if there are multiple peaks, then take the peak that is closest to the center.
-#             if (len(peak) > 1):
-#                 curr_closest = -1
-#                 closest_value = 50
-#                 for peak in peak:
-#                     diff = abs(peak - ideal_mid)
-#                     if (diff < closest_value):
-#                         closest_value = diff
-#                         curr_closest = peak
-        
-#                 peak = curr_closest
-#             elif (len(peak) == 0): peak = ideal_mid
-
-#             correction = ideal_mid - peak
-
-#             if correction != 0:
-#                 # pipeline with correction
-#                 cross_section_line = make_crossline(vert, bearing, 20.0, correction)
-#                 cross_points = redistribute_vertices(cross_section_line, 0.4)
-#                 cross_points_3D = get_heights3D(cross_points, DTM)
-             
-#             ### plot walltypes for visual inspection
-#             # if (wall_type=='1'):     
-#                 # helpers.just_plot(cross_points_3D, 'green')
-#             # elif (wall_type=='2'):     
-#                 # helpers.just_plot(cross_points_3D, 'orange')
-#             # elif (wall_type=='3'):     
-#                 # helpers.just_plot(cross_points_3D, 'red')
-#             # else:     
-#                 # helpers.just_plot(cross_points_3D, 'blue')
-
-               
-                
-#             ### push data to lists for creation of dataframe
-#             object_ids.append("{0}-{1}".format(DigeID, i))
-#             geoms.append(cross_points_3D)
-#             types.append(wall_type)
-           
-#         ### create dataframe
-#     data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
-#     out_gdf = gpd.GeoDataFrame(data, crs="EPSG:25832")
-#     return out_gdf
-
-def initV2(gdf, DTM):
+def initV2(gdf, DTM, subwall_distance=5):
     length = len(gdf.index)
     object_ids = []
     geoms = []
     types = []
     corrected_subwalls = []
     for index, row in gdf.iterrows():
-        print(round(index / length * 100, 2))
+        print(round(index / length * 100, 1))
         geometry = row["geometry"]
 
-        #stonewall broken into points at a distance of x
-        linestring = redistribute_vertices(geometry, 5)
+        outer_coords = list(geometry.coords)
+        
+        for i in range(len(outer_coords) - 1):
+            try:
+                curr_point = outer_coords[i]
+                nxt_point = outer_coords[i+1]
+            except:
+                import pdb; pdb.set_trace()
+            subline = LineString([curr_point, nxt_point])
 
-        #coordinates of the points comprising linestring
-        coords = list(linestring.coords)
+            ## calculate for later when needs to be shifted
+            subline_bearing = calculate_initial_compass_bearing(curr_point, nxt_point)
 
-        DigeID = row["DigeID"]
+            linestring = redistribute_vertices(subline, subwall_distance)
 
-        #array that will contain the wall_type and correction from for the individual profiles
-        subwall_types = []
-        subwall_corrections = []
+            #coordinates of the points comprising linestring
+            inner_coords = list(linestring.coords)
 
-        for i, p in enumerate(coords):
-            ## every point except for the last point will use the next point to create bearing
-            if i < len(coords) - 1:
+            DigeID = row["DigeID"]
+
+            #array that will contain the wall_type and correction from for the individual profiles
+            subwall_types = []
+            subwall_corrections = []
+            for i, p in enumerate(inner_coords):
+                ## every point except for the last point will use the next point to create bearing
                 vert = Point(p)
-                next_vert = Point(coords[i + 1])
-                bearing = calculate_initial_compass_bearing(
-                    vert.coords[0], next_vert.coords[0]
-                )
-            ### go between the last and the second last point 
-            if i == len(coords) - 1:
-                vert = Point(p)
-                previous_vert = Point(coords[i - 1])
-                bearing = calculate_initial_compass_bearing(
-                    previous_vert.coords[0], vert.coords[0]
-                )
+                if i < len(inner_coords) - 1:
+                    next_vert = Point(inner_coords[i + 1])
+                    bearing = calculate_initial_compass_bearing(
+                        vert.coords[0], next_vert.coords[0]
+                    )
+                ### go between the last and the second last point 
+                if i == len(inner_coords) - 1:
+                    previous_vert = Point(inner_coords[i - 1])
+                    bearing = calculate_initial_compass_bearing(
+                        previous_vert.coords[0], vert.coords[0]
+                    )
 
-            # pipeline
-            cross_section_line = make_crossline(vert, bearing, 20.0)
-            cross_points = redistribute_vertices(cross_section_line, 0.4)
-            cross_points_3D = get_heights3D(cross_points, DTM)
-
-            # helpers.just_plot(cross_points_3D, 'black')
-
-            peaks_array, wall_type = helpers.find_wall_peak(cross_points_3D)
-            
-            ### calculate correction
-            ideal_mid = math.floor(len(cross_points_3D)/2)
-            best_peak = None
-            ## if there are multiple peaks, then take the peak that is closest to the center.
-
-            if (len(peaks_array) > 1):
-                curr_closest = -1
-                closest_value = 50
-                for peak in peaks_array:
-                    diff = abs(peak - ideal_mid)
-                    if (diff < closest_value):
-                        closest_value = diff
-                        curr_closest = peak
-                best_peak = curr_closest
-            elif (len(peaks_array) == 1 ):
-                best_peak = peaks_array[0]
-            elif (len(peaks_array) == 0): 
-                best_peak = ideal_mid
-
-            correction = ideal_mid - best_peak
-
-            subwall_types.append(wall_type)
-            subwall_corrections.append(correction)
-       
-            if correction != 0:
-                # pipeline with correction
-                cross_section_line = make_crossline(vert, bearing, 20.0, correction)
+                # pipeline
+                cross_section_line = make_crossline(vert, bearing, 20.0)
                 cross_points = redistribute_vertices(cross_section_line, 0.4)
                 cross_points_3D = get_heights3D(cross_points, DTM)
 
+                # helpers.just_plot(cross_points_3D, 'black')
+
+                peaks_array, wall_type = helpers.find_wall_peak(cross_points_3D)
+                
+                ### calculate correction
+                ideal_mid = math.floor(len(cross_points_3D)/2)
+                best_peak = None
+                ## if there are multiple peaks, then take the peak that is closest to the center.
+
+                if (len(peaks_array) > 1):
+                    curr_closest = -1
+                    closest_value = 50
+                    for peak in peaks_array:
+                        diff = abs(peak - ideal_mid)
+                        if (diff < closest_value):
+                            closest_value = diff
+                            curr_closest = peak
+                    best_peak = curr_closest
+                elif (len(peaks_array) == 1 ):
+                    best_peak = peaks_array[0]
+                else: 
+                    best_peak = ideal_mid
+
+                correction = ideal_mid - best_peak
+
+                subwall_types.append(wall_type)
+                subwall_corrections.append(correction)
+        
+                if correction != 0:
+                    # pipeline with correction
+                    cross_section_line = make_crossline(vert, bearing, 20.0, correction)
+                    cross_points = redistribute_vertices(cross_section_line, 0.4)
+                    cross_points_3D = get_heights3D(cross_points, DTM)
 
 
-            ## plot walltypes for visual inspection
-            # if (wall_type=='1'):     
-            #     helpers.just_plot(cross_points_3D, 'green')
-            # elif (wall_type=='2'):     
-            #     helpers.just_plot(cross_points_3D, 'orange')
-            # elif (wall_type=='3'):     
-            #     helpers.just_plot(cross_points_3D, 'red')
-            # else:     
-            #     helpers.just_plot(cross_points_3D, 'blue')
 
-            ### push data to lists for creation of dataframe
-            object_ids.append("{0}-{1}".format(DigeID, i))
-            geoms.append(cross_points_3D)
-            types.append(wall_type)
+                ## plot walltypes for visual inspection
+                # print(wall_type)
+                # if ( wall_type not in ['1']):
+                #     helpers.plot_profiles(cross_points_3D, wall_type)
 
-        #### REDRAW WALL
-        # average correciton of the arrays along the wall
-        average_correction = np.average(subwall_corrections)
+                ### push data to lists for creation of dataframe
+                object_ids.append("{0}-{1}".format(DigeID, i))
+                geoms.append(cross_points_3D)
+                types.append(wall_type)
 
-        corrected_geometry = geometry.parallel_offset(average_correction, "left")
-        corrected_linestring = redistribute_vertices(corrected_geometry, 5)
-        corrected_coords = list(corrected_linestring.coords)
+            #### REDRAW WALL
+            # average correciton of the arrays along the wall
 
-        for i in range(len(corrected_coords) - 1):
-            crnt_prfl = subwall_types[i]
-            next_prfl = subwall_types[i+1]
 
-            crnt_point = corrected_coords[i]
-            nxt_point = corrected_coords[i+1]
+            #### IF THE WALL IS SHORTER THAN 5, DONT BOTH CORRECTING - OTHERWISE CORRECT BY THE MEDIAN OF THE SUBWALL CORRECTIONS
 
-            if (crnt_prfl != '0' and next_prfl != '0'):
-                corrected_subwall = LineString([crnt_point, nxt_point])
-                corrected_subwalls.append(corrected_subwall)
+            if (len(subwall_corrections) > 5):
+                average_correction = np.median(subwall_corrections) * 0.4
+            else:
+                average_correction = 0
+            
+
+            # apply correction
+            if average_correction > 0:
+                new_curr_point = offset_point(curr_point, subline_bearing, 270, abs(average_correction))
+                new_nxt_point = offset_point(nxt_point, subline_bearing, 270, abs(average_correction))
+            elif average_correction < 0:
+                new_curr_point = offset_point(curr_point, subline_bearing, 90, abs(average_correction))
+                new_nxt_point = offset_point(nxt_point, subline_bearing, 90, abs(average_correction))
+            else:
+                new_curr_point = curr_point
+                new_nxt_point = nxt_point
+        
+            # create new line based on 
+            corrected_geometry = LineString([new_curr_point, new_nxt_point])
+
+
+            corrected_linestring = redistribute_vertices(corrected_geometry, subwall_distance)
+            corrected_coords = list(corrected_linestring.coords)
+
+
+            ### USE THIS IF YOU WANT THE LINES  **TO** BE CORRECTED
+            for i in range(len(corrected_coords) - 1):
+                try:
+                    crnt_prfl = subwall_types[i]
+                    next_prfl = subwall_types[i+1]
+
+                    crnt_point = corrected_coords[i]
+                    nxt_point = corrected_coords[i+1]
+                except:
+                    import pdb; pdb.set_trace()
+                if (crnt_prfl != '0' and next_prfl != '0'):
+                    corrected_subwall = LineString([crnt_point, nxt_point])
+                    corrected_subwalls.append(corrected_subwall)
+
+            ### USE THIS IF YOU WANT THE LINES ***NOT TO BE*** CORRECTED
+            # for i in range(len(inner_coords) - 1):
+            #     try:
+            #         crnt_prfl = subwall_types[i]
+            #         next_prfl = subwall_types[i+1]
+
+            #         crnt_point = inner_coords[i]
+            #         nxt_point = inner_coords[i+1]
+            #     except:
+            #         import pdb; pdb.set_trace()
+            #     if (crnt_prfl != '0' and next_prfl != '0'):
+            #         corrected_subwall = LineString([crnt_point, nxt_point])
+            #         corrected_subwalls.append(corrected_subwall)
+
+
 
     ### create dataframe
     data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
@@ -316,10 +283,9 @@ dtm = '../data/DTM/DTM_AEROE/DTM_AEROE.vrt'
 
 gdf = gpd.read_file(path_to_stonewalls)
 gdf = gdf.to_crs(epsg=25832)
+# gdf = gdf[400:420]
 
-gdf = gdf[:10]
- 
-thingV2, thangV2 = initV2(gdf, dtm)
+profiles, walls = initV2(gdf, dtm, 5)
 # thingV2 = initV2(gdf, dtm)
 finish = time.time()
 
@@ -327,11 +293,12 @@ print("Time Taken is {0}s".format(finish - start))
 
 
 
-# %%
+ # %%
 output_path = "/mnt/c/Users/EZRA/Desktop/output"
 import time
 the_time = time.time()
-thingV2.to_file(os.path.join(output_path, str(int(the_time)) + 'profiles' + '.geojson'), driver="GeoJSON")
-thangV2.to_file(os.path.join(output_path, str(int(the_time)) + 'walls' + '.geojson'), driver="GeoJSON")
+
+profiles.to_file(os.path.join(output_path, str(int(the_time)) + 'profiles' + '.geojson'), driver="GeoJSON")
+walls.to_file(os.path.join(output_path, str(int(the_time)) + 'walls' + '.geojson'), driver="GeoJSON")
 
 # %%

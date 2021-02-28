@@ -45,17 +45,52 @@ def just_plot(geom, color='green', title=''):
 def rise_run_to_angle(rise, run):
    return math.degrees(math.atan(rise/run))
 
+def vague_case(geom):
+
+    elevs = [p.z for p in geom]
+
+    x = np.arange(len(elevs))
+    y = np.array(elevs)
+
+    xr = x.reshape(-1, 1)
+
+    model = LinearRegression.LinearRegression().fit(xr, y)
+    score = model.score(xr, y)
+    print(score)
+    if (score < 0.90):
+        return True
+    else: return False
+
+def wall_tests(geom):
+    if large_wall_test(geom): return '1'
+    if small_wall_test(geom): return '2'
+    if onesided_wall_test(geom): return '3'
+    # if vague_case(geom): return '4'
+    else: return '0'
+
 def large_wall_test(geom):
     peaks = large_peaks_finder(geom)
     # print('++++large peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
 
+def large_peaks_finder(geom):
+    z = [p.z for p in geom]
+    ### TODO change here for adjustment
+    peaks, _ = signal.find_peaks(z, prominence=0.35)
+    return peaks
+
 def small_wall_test(geom):
     peaks = small_peaks_finder(geom)
     # print('---small peaks', peaks)
     if (len(peaks) > 0): return True
     else: return False
+
+def small_peaks_finder(geom):
+    z = [p.z for p in geom]
+    ### TODO change here for adjustment
+    peaks, _ = signal.find_peaks(z, prominence=0.22)
+    return peaks
 
 def onesided_wall_test(geom):
     ##elevations
@@ -64,45 +99,6 @@ def onesided_wall_test(geom):
         return True
     else: return False
     return True
-
-def wall_tests(geom):
-    if large_wall_test(geom): return '1'
-    if small_wall_test(geom): return '2'
-    if onesided_wall_test(geom): return '3'
-    else: return '0'
-
-def no_wall_test(geom):
-    return True
-
-def pnt_from_rtn_arnd_orgn(point, origin, angle):
-
-   p = {'x': point[0], 'y':point[1]}
-   o = {'x': origin[0], 'y':origin[1]}
-
-   # if (p['x'] == o['x'] & p['y'] == o['y']): return point
-
-   cos = math.cos(angle)
-   sin = math.sin(angle)
-
-   dx = p['x'] - o['x']
-   dy = p['y'] - o['y']
-
-   nx = (cos * dx) + (sin * dy) + o['x']
-   ny = (cos * dy) - (sin * dx) + o['y']
-
-   return [nx, ny]
-
-def large_peaks_finder(geom):
-    z = [p.z for p in geom]
-    ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.30, height=(None, None))
-    return peaks
-
-def small_peaks_finder(geom):
-    z = [p.z for p in geom]
-    ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(z, prominence=0.17, height=(None, 0.4))
-    return peaks
 
 def onesided_peaks_finder(geom):
     z = [p.z for p in geom]
@@ -127,8 +123,11 @@ def onesided_peaks_finder(geom):
     # new_x = np.array([p.x for p in new_geom])
     new_z = np.array([p.y for p in new_geom])
     ### TODO change here for adjustment
-    peaks, _ = signal.find_peaks(new_z, prominence=0.17, height=(None, None))
+    peaks, _ = signal.find_peaks(new_z, prominence=0.20)
     return peaks
+
+
+
 
 
 def find_wall_peak(geom):
@@ -145,5 +144,20 @@ def find_wall_peak(geom):
         #print('onesided peak')
         return (onesided_peaks, '3')
     # print('no wall no peak no chance')
+    # vague_peaks = vague_case(geom)
+    # if vague_peaks:
+    #     return ([25], '4')
     return ([], '0')
     
+def plot_profiles(profile, wall_type):    
+    if (wall_type=='1'):     
+        just_plot(profile, 'green')
+    elif (wall_type=='2'):     
+        just_plot(profile, 'orange')
+    elif (wall_type=='3'):     
+        just_plot(profile, 'red')
+    elif(wall_type=='4'):
+        just_plot(profile, 'purple')
+    else:     
+        just_plot(profile, 'blue')
+    return 1
