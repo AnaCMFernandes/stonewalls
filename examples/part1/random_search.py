@@ -1,4 +1,3 @@
-#%%
 import geopandas as gpd
 import time
 import os
@@ -9,18 +8,18 @@ from tensorflow.keras import datasets, layers, models
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
+from scipy.stats import reciprocal
+from sklearn.model_selection import RandomizedSearchCV
 
 
 yellow_follow = '/mnt/c/Users/EZRA/Documents/TOOLBOXES/yellow/lib/'
 import sys; sys.path.append(yellow_follow)
 import ml_utils
 
-
 input_path = '/home/ezra/stonewalls/data/profiles/cross_sections_aeroe_final.geojson'
 
 gdf = gpd.read_file(input_path)
 
-# %%
 
 ### CREATE LABELS
 labels = gdf['type']
@@ -31,7 +30,7 @@ labels = labels[mask]
 labels = keras.utils.to_categorical(
     labels, num_classes=2, dtype='float32'
 )
-# %%
+
 geom = gdf['geometry']
 geom = geom[mask]
 profiles = geom.apply((lambda x: np.array([(p.z) for p in x]).astype('float32')))
@@ -43,50 +42,13 @@ x = np.concatenate([profiles, profiles_flipped])
 x = ml_utils.add_fixed_noise(x)
 y = np.concatenate([labels,labels])
 
-# %%
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33)
 X_train = np.array([np.array(x).astype('float32') for x in X_train])
 X_test = np.array([np.array(x).astype('float32') for x in X_test])
 X_train = X_train.reshape(X_train.shape[0], 51 , 1)
 X_test = X_test.reshape(X_test.shape[0], 51, 1)
 
-# %%
-#     model = keras.Sequential()
-#     model.add(layers.Conv1D(filters=64, kernel_size = 3, activation='relu', input_shape=(51,1)))
-#     model.add(layers.Conv1D(filters=64, kernel_size = 3, activation='relu'))
-#     model.add(layers.MaxPooling1D(pool_size=2))
-#     model.add(layers.Flatten())
-#     model.add(layers.Dropout(0.33))
-#     model.add(layers.Dense(units=100, activation='relu'))
-#     model.add(layers.Dense(units=50, activation='relu'))
-#     model.add(layers.Dense(units = 2, activation='softmax'))
-  
-#     model.compile(optimizer='adam',
-#                 loss="binary_crossentropy",
-#                 metrics=['accuracy'])
-
-# history = model.fit(
-#    x=X_train,
-#    y=y_train,
-#    epochs=15,
-#    verbose=1,
-#    validation_split=0.2,
-#    validation_data=(X_test, y_test),
-# )
-
-# # %%
-
-# predictions = model.predict(x=X_test, verbose=1)
-# predictions = predictions.round()
-# cm = confusion_matrix(y_test.argmax(axis=1), predictions.argmax(axis=1))
-# cm
-
-# %%
-from scipy.stats import reciprocal
-from sklearn.model_selection import RandomizedSearchCV
-
 def build_model(kernel_initializer="glorot_uniform", optimizer='Adam', n_hidden=1, filters=32, n_neurons=30, learning_rate=3e-3, dropout = 0.2, kernel_size = 3, input_shape=(51,1), activation="relu"):
-
 
    model = keras.models.Sequential()
    options = {"input_shape": input_shape}
@@ -129,4 +91,7 @@ rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=10, cv=3)
 rnd_search_cv.fit(X_train, y_train, epochs=30,
 validation_split=0.3,
 callbacks=[keras.callbacks.EarlyStopping(patience=10)])
-# %%
+
+print(rnd_search_cv.best_params_)
+model = rnd_search_cv.best_estimator_.model
+model.save("./models/best_model.h5")
