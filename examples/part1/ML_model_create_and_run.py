@@ -20,9 +20,16 @@ import ml_utils
 x = np.load('/home/ezra/stonewalls/data/profiles/training_walls_flipped_balanced.npy')
 y = np.load('/home/ezra/stonewalls/data/profiles/training_walls_labels_flipped_balanced.npy')
 #%%
-x = ml_utils.add_fixed_noise(x)
+
+# max_x = 254
+# min_x = -7
+
+# x = (x - min_x) / (max_x - min_x)
+#%%
+# X_train = ml_utils.add_fixed_noise(X_train)
 # %%
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33)
+
 X_train = np.array([np.array(x).astype('float32') for x in X_train])
 X_test = np.array([np.array(x).astype('float32') for x in X_test])
 X_train = X_train.reshape(X_train.shape[0], 51 , 1)
@@ -68,3 +75,4 @@ predictions = predictions.round()
 cm = confusion_matrix(y_test.argmax(axis=1), predictions.argmax(axis=1))
 cm
 
+# %%
