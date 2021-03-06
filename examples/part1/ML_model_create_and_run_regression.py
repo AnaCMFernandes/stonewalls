@@ -62,9 +62,8 @@ history = model.fit(
 
 # %%
 
-predictions = model.predict(x=X_test, verbose=1)
-predictions = predictions.round()
-cm = confusion_matrix(y_test.argmax(axis=1), predictions.argmax(axis=1))
-cm
+# predictions = model.predict(x=X_test, verbose=1)
+# predictions = predictions.round()
+results = model.evaluate(X_test, y_test, batch_size=128)
 
 # %%

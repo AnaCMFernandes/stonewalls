@@ -508,30 +508,30 @@ def initV3(gdf, DTM, subwall_distance=5):
 #     # return out_gdf1
 #     return out_gdf1
 
+
 #%%
+# import geopandas as gpd
+# import time
+# import os
+# import sys; sys.path.append('..'); sys.path.append('../lib') 
+# from tensorflow import keras
 
-import geopandas as gpd
-import time
-import os
-import sys; sys.path.append('..'); sys.path.append('../lib') 
-from tensorflow import keras
+# start = time.time() 
 
-start = time.time() 
+# path_to_stonewalls = '../data/stonewalls/aeroe/Stonewalls_AEROE.shp'
+# dtm = '../data/DTM/DTM_AEROE/DTM_AEROE.vrt'
 
-path_to_stonewalls = '../data/stonewalls/aeroe/Stonewalls_AEROE.shp'
-dtm = '../data/DTM/DTM_AEROE/DTM_AEROE.vrt'
-
-gdf = gpd.read_file(path_to_stonewalls)
-gdf = gdf.to_crs(epsg=25832)
+# gdf = gpd.read_file(path_to_stonewalls)
+# gdf = gdf.to_crs(epsg=25832)
 
 
-profiles = initV3(gdf, dtm, subwall_distance=5)
+# profiles = initV3(gdf, dtm, subwall_distance=5)
 
-finish = time.time()
+# finish = time.time()
 
-print("Time Taken is {0}s".format(finish - start))
+# print("Time Taken is {0}s".format(finish - start))
 
-profiles.to_file("full_profiles_classbypeak_05032021.geojson", driver='GeoJSON')
- # %%
+# profiles.to_file("full_profiles_classbypeak_05032021.geojson", driver='GeoJSON')
+
 
 
