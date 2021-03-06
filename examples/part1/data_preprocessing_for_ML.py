@@ -15,7 +15,9 @@ yellow_follow = '/mnt/c/Users/EZRA/Documents/TOOLBOXES/yellow/lib/'
 import sys; sys.path.append(yellow_follow)
 import ml_utils
 
-input_path = '/home/ezra/stonewalls/data/profiles/cross_sections_aeroe_final.geojson'
+input_path = '/home/ezra/stonewalls/data/profiles/geojson/full_profiles_classbypeak_05032021.geojson'
+output_folder = '/home/ezra/stonewalls/data/profiles/npy'
+
 
 gdf = gpd.read_file(input_path)
 labels = gdf['type']
@@ -25,15 +27,15 @@ profiles = geom.apply((lambda x: np.array([(p.z) for p in x]).astype('float32'))
 # %%
 ## STANDARD DATASET UNBALANCED
 
-labels_numpy = labels.map({'0': 0, '1': 1, '2': 1, '3': 1 }).to_numpy()
-y = keras.utils.to_categorical(
-    labels_numpy, num_classes=2, dtype='float32'
-)
+# labels_numpy = labels.map({'0': 0, '1': 1, '2': 1, '3': 1 }).to_numpy()
+# y = keras.utils.to_categorical(
+#     labels, num_classes=52, dtype='float32'
+# )
 
 x = np.stack(profiles.values)
-
-np.save('/home/ezra/stonewalls/data/profiles/training_walls.npy', x)
-np.save('/home/ezra/stonewalls/data/profiles/training_walls_labels.npy', y)
+y = labels
+np.save(os.join(output_folder,'training_by_peak_walls.npy'), x)
+np.save(os.join(output_folder,'training_by_peak_walls_labels.npy'), y)
 ### CREATE LABELS
 # %%
 
