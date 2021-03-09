@@ -78,14 +78,24 @@ np.save('/home/ezra/stonewalls/data/profiles/training_walls_labels_balanced.npy'
 #%%
 ### CREATE DATASET FLIPPED BALANCED(MINORITY CLASS)
 
-labels_numpy = labels.map({'0': 0, '1': 1, '2': 1, '3': 1 }).to_numpy()
+# labels_numpy = labels.map({'0': 0, '1': 1, '2': 1, '3': 1 }).to_numpy()
 
-counts = ml_utils.count_freq(labels_numpy)
-mask = ml_utils.minority_class_mask(labels_numpy, counts[0][1])
-labels_numpy = labels_numpy[mask]
+y = labels.values
+
+y = y + 1
+
+no_wall_mask = y == -98
+wall_mask = y != -98
+
+y[no_wall_mask] = 0
+y[wall_mask] = 1
+
+counts = ml_utils.count_freq(y)
+mask = ml_utils.minority_class_mask(y, counts[0][1])
+y = y[mask]
 profiles = profiles[mask]
 y = keras.utils.to_categorical(
-    labels_numpy, num_classes=2, dtype='float32'
+    y, num_classes=2, dtype='float32'
 )
 
 profiles = np.stack(profiles.values)
@@ -95,8 +105,8 @@ profiles_flipped = np.array([np.flip(f) for f in profiles])
 x = np.concatenate([profiles, profiles_flipped])
 y = np.concatenate([y,y])
 
-np.save('/home/ezra/stonewalls/data/profiles/training_walls_flipped_balanced.npy', x)
-np.save('/home/ezra/stonewalls/data/profiles/training_walls_labels_flipped_balanced.npy', y)
+np.save('/home/ezra/stonewalls/data/profiles/npy/training_walls_flipped_balanced.npy', x)
+np.save('/home/ezra/stonewalls/data/profiles/npy/training_walls_labels_flipped_balanced.npy', y)
 
 # %%
 

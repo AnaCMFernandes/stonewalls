@@ -263,12 +263,13 @@ def initV2(gdf, DTM, subwall_distance=5):
     ### create dataframe
     data = {'OBJECTID': object_ids, 'type': types, 'geometry': geoms}
     subwalldata = {'geometry': corrected_subwalls}
-    out_gdf1 = gpd.GeoDataFrame(data, crs="EPSG:25832") 
-    out_gdf2 = gpd.GeoDataFrame(subwalldata, crs="EPSG:25832") 
+    out_profiles = gpd.GeoDataFrame(data, crs="EPSG:25832") 
+    out_walls = gpd.GeoDataFrame(subwalldata, crs="EPSG:25832") 
 
     # return out_gdf1
-    return out_gdf1, out_gdf2
-def initV3(gdf, DTM, subwall_distance=5):
+    return out_profiles, out_walls
+
+def initPeaks(gdf, DTM, subwall_distance=5):
     length = len(gdf.index)
     object_ids = []
     geoms = []

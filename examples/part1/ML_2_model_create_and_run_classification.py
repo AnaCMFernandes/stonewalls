@@ -10,25 +10,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
 yellow_follow = '/mnt/c/Users/EZRA/Documents/TOOLBOXES/yellow/lib/'
 import sys; sys.path.append(yellow_follow)
 import ml_utils
 
-# %%
+folder = "/home/ezra/stonewalls/data/profiles/npy/"
+data = "training_by_peak_walls.npy"
+labels = "training_by_peak_walls_labels.npy"
 
-x = np.load('/home/ezra/stonewalls/data/profiles/training_walls_flipped_balanced.npy')
-y = np.load('/home/ezra/stonewalls/data/profiles/training_walls_labels_flipped_balanced.npy')
+X = np.load(folder + data)
+y = np.load(folder + labels)
 #%%
+### PREPROCESSING AREA
+maxX = 254
+minX = -7
 
-# max_x = 254
-# min_x = -7
-
-# x = (x - min_x) / (max_x - min_x)
-#%%
+X = (X - minX) / (maxX - minX)
 # X_train = ml_utils.add_fixed_noise(X_train)
+
+
 # %%
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
 
 X_train = np.array([np.array(x).astype('float32') for x in X_train])
 X_test = np.array([np.array(x).astype('float32') for x in X_test])
