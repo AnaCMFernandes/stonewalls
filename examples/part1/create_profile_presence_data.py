@@ -16,9 +16,10 @@ gdf = gdf.to_crs(epsg=25832)
 
 #sub_gdf = gdf[20:70]
 
-out_gdf = create_profiles(gdf, dtm)
+profiles, walls = create_profiles(gdf, dtm)
 
-out_gdf.to_file(output_folder + "all_profiles_100321.geojson", driver="GeoJSON")
+profiles.to_file(output_folder + "all_profiles_110321.geojson", driver="GeoJSON")
+walls.to_file(output_folder + "all_walls_110321.geojson", driver="GeoJSON")
 
 finish = time.time()
 

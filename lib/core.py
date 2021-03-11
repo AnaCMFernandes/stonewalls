@@ -122,7 +122,6 @@ def create_profiles(gdf, DTM, subwall_distance=5):
 
             ## calculate for later when needs to be shifted
             subline_bearing = calculate_initial_compass_bearing(curr_point, nxt_point)
-
             linestring = redistribute_vertices(subline, subwall_distance)
 
             #coordinates of the points comprising linestring
