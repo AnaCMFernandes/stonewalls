@@ -100,7 +100,7 @@ def redistribute_vertices(geom, distance):
     else:
         raise ValueError('unhandled geometry %s', (geom.geom_type,))
 
-def initV2(gdf, DTM, subwall_distance=5):
+def create_profiles(gdf, DTM, subwall_distance=5):
     length = len(gdf.index)
     object_ids = []
     geoms = []
@@ -269,7 +269,7 @@ def initV2(gdf, DTM, subwall_distance=5):
     # return out_gdf1
     return out_profiles, out_walls
 
-def initPeaks(gdf, DTM, subwall_distance=5):
+def create_profiles_peaks_only(gdf, DTM, subwall_distance=5):
     length = len(gdf.index)
     object_ids = []
     geoms = []

@@ -1,23 +1,24 @@
 #%%
 import geopandas as gpd
 import time
-import sys; sys.path.append('..')
+import sys; sys.path.append('/home/ezra/stonewalls/lib')
 
-from lib.core import init
+from core import create_profiles
 
 start = time.time() 
 
-path_to_stonewalls = '../../Data/BES_STEN_JORDDIGER_SHAPE/Stonewalls_AEROE.shp'
+path_to_stonewalls = '/home/ezra/stonewalls/data/stonewalls/Stonewalls_AEROE.shp'
+dtm = '/home/ezra/stonewalls/data/DTM/DTM_AEROE/DTM_AEROE.vrt'
+output_folder = '/home/ezra/stonewalls/data/profiles/geojson/'
 
 gdf = gpd.read_file(path_to_stonewalls)
 gdf = gdf.to_crs(epsg=25832)
-dtm = '../../Data/DTM/DTM_AEROE.vrt'
 
 #sub_gdf = gdf[20:70]
 
-out_gdf = init(gdf, dtm)
+out_gdf = create_profiles(gdf, dtm)
 
-out_gdf.to_file("cross_sections_50_test_diff.geojson", driver="GeoJSON")
+out_gdf.to_file(output_folder + "all_profiles_100321.geojson", driver="GeoJSON")
 
 finish = time.time()
 
