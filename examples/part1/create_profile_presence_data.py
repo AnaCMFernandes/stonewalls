@@ -14,12 +14,12 @@ output_folder = '/home/ezra/stonewalls/data/profiles/geojson/'
 gdf = gpd.read_file(path_to_stonewalls)
 gdf = gdf.to_crs(epsg=25832)
 
-#sub_gdf = gdf[20:70]
+sub_gdf = gdf[:100]
 
-profiles, walls = create_profiles(gdf, dtm)
+profiles, walls = create_profiles(gdf, dtm, subwall_distance=0.4)
 
-profiles.to_file(output_folder + "all_profiles_110321.geojson", driver="GeoJSON")
-walls.to_file(output_folder + "all_walls_110321.geojson", driver="GeoJSON")
+profiles.to_file(output_folder + "profiles_all_04m_220321.geojson", driver="GeoJSON")
+walls.to_file(output_folder + "walls_all_04m_220321.geojson", driver="GeoJSON")
 
 finish = time.time()
 

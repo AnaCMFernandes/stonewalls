@@ -109,9 +109,9 @@ def create_profiles(gdf, DTM, subwall_distance=5):
     for index, row in gdf.iterrows():
         print(round(index / length * 100, 1))
         geometry = row["geometry"]
-
+        DigeID = row["DigeID"]
         outer_coords = list(geometry.coords)
-        
+
         for i in range(len(outer_coords) - 1):
             try:
                 curr_point = outer_coords[i]
@@ -124,10 +124,8 @@ def create_profiles(gdf, DTM, subwall_distance=5):
             subline_bearing = calculate_initial_compass_bearing(curr_point, nxt_point)
             linestring = redistribute_vertices(subline, subwall_distance)
 
-            #coordinates of the points comprising linestring
+            #coordinates of the points comprising STRAIGHTLINE SECTION linestring
             inner_coords = list(linestring.coords)
-
-            DigeID = row["DigeID"]
 
             #array that will contain the wall_type and correction from for the individual profiles
             subwall_types = []
@@ -147,7 +145,7 @@ def create_profiles(gdf, DTM, subwall_distance=5):
                         previous_vert.coords[0], vert.coords[0]
                     )
 
-                # pipeline
+                # profile creation pipeline
                 cross_section_line = make_crossline(vert, bearing, 20.0)
                 cross_points = redistribute_vertices(cross_section_line, 0.4)
                 cross_points_3D = get_heights3D(cross_points, DTM)
@@ -201,7 +199,6 @@ def create_profiles(gdf, DTM, subwall_distance=5):
             #### REDRAW WALL
             # average correciton of the arrays along the wall
 
-
             #### IF THE WALL IS SHORTER THAN 5, DONT BOTH CORRECTING - OTHERWISE CORRECT BY THE MEDIAN OF THE SUBWALL CORRECTIONS
 
             if (len(subwall_corrections) > 5):
@@ -213,18 +210,21 @@ def create_profiles(gdf, DTM, subwall_distance=5):
             # apply correction
             if average_correction > 0:
                 new_curr_point = offset_point(curr_point, subline_bearing, 270, abs(average_correction))
+
                 new_nxt_point = offset_point(nxt_point, subline_bearing, 270, abs(average_correction))
+
             elif average_correction < 0:
+
                 new_curr_point = offset_point(curr_point, subline_bearing, 90, abs(average_correction))
+
                 new_nxt_point = offset_point(nxt_point, subline_bearing, 90, abs(average_correction))
+                
             else:
                 new_curr_point = curr_point
                 new_nxt_point = nxt_point
         
             # create new line based on 
             corrected_geometry = LineString([new_curr_point, new_nxt_point])
-
-
             corrected_linestring = redistribute_vertices(corrected_geometry, subwall_distance)
             corrected_coords = list(corrected_linestring.coords)
 
