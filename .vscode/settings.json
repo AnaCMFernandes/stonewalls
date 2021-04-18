@@ -2,5 +2,22 @@
    "python.pythonPath": "/home/ezra/anaconda3/envs/ml/bin/python",
    "python.linting.pylintEnabled": true,
    "python.linting.enabled": true,
-   "python.formatting.provider": "black"
+   "python.formatting.provider": "black",
+   "workbench.colorCustomizations": {
+      "activityBar.activeBackground": "#5596e6",
+      "activityBar.activeBorder": "#f7c7dd",
+      "activityBar.background": "#5596e6",
+      "activityBar.foreground": "#15202b",
+      "activityBar.inactiveForeground": "#15202b99",
+      "activityBarBadge.background": "#f7c7dd",
+      "activityBarBadge.foreground": "#15202b",
+      "statusBar.background": "#297bdf",
+      "statusBar.foreground": "#e7e7e7",
+      "statusBarItem.hoverBackground": "#5596e6",
+      "titleBar.activeBackground": "#297bdf",
+      "titleBar.activeForeground": "#e7e7e7",
+      "titleBar.inactiveBackground": "#297bdf99",
+      "titleBar.inactiveForeground": "#e7e7e799"
+   },
+   "peacock.remoteColor": "#297bdf"
 }

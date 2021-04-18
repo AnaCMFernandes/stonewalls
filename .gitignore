@@ -10,3 +10,4 @@
 *.vrt
 data/
 data/**
+*:Zone.Identifier
