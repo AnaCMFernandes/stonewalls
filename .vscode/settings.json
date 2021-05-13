@@ -4,20 +4,20 @@
    "python.linting.enabled": true,
    "python.formatting.provider": "black",
    "workbench.colorCustomizations": {
-      "activityBar.activeBackground": "#5596e6",
-      "activityBar.activeBorder": "#f7c7dd",
-      "activityBar.background": "#5596e6",
+      "activityBar.activeBackground": "#f5f5f5",
+      "activityBar.activeBorder": "#df9f9f",
+      "activityBar.background": "#f5f5f5",
       "activityBar.foreground": "#15202b",
       "activityBar.inactiveForeground": "#15202b99",
-      "activityBarBadge.background": "#f7c7dd",
+      "activityBarBadge.background": "#df9f9f",
       "activityBarBadge.foreground": "#15202b",
-      "statusBar.background": "#297bdf",
-      "statusBar.foreground": "#e7e7e7",
-      "statusBarItem.hoverBackground": "#5596e6",
-      "titleBar.activeBackground": "#297bdf",
-      "titleBar.activeForeground": "#e7e7e7",
-      "titleBar.inactiveBackground": "#297bdf99",
-      "titleBar.inactiveForeground": "#e7e7e799"
+      "statusBar.background": "#dcdcdc",
+      "statusBar.foreground": "#15202b",
+      "statusBarItem.hoverBackground": "#c2c2c2",
+      "titleBar.activeBackground": "#dcdcdc",
+      "titleBar.activeForeground": "#15202b",
+      "titleBar.inactiveBackground": "#dcdcdc99",
+      "titleBar.inactiveForeground": "#15202b99"
    },
-   "peacock.remoteColor": "#297bdf"
+   "peacock.remoteColor": "#dcdcdc"
 }
