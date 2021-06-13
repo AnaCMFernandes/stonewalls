@@ -157,13 +157,14 @@ def zobel_filter(arr, size=[3, 3], normalised=False):
 
     return filtered
 
-
+#%%
 if __name__ == "__main__":
 
-    buteo_follow = "c:/buteo/"
-    buteo_buteo_follow = "c:/buteo/buteo/"
-
+    buteo_follow = "/home/afer/yellow/"
+    buteo_buteo_follow = "/home/afer/yellow/buteo/"
+    import os
     import sys
+    from glob import glob
 
     sys.path.append(buteo_follow)
     sys.path.append(buteo_buteo_follow)
@@ -180,27 +181,51 @@ if __name__ == "__main__":
     from osgeo import gdal
 
     # ref = "/mnt/c/Users/EZRA/Desktop/tmp/DTM_AEROE/DTM_AEROE.vrt"
+    out_folder = '/mnt/d/ACMF/Stonewalls/Data/Silkeborg/sobel/'
+    folder = '/mnt/d/ACMF/Stonewalls/Data/Silkeborg/dtm/'
+    arrays = glob(folder + "*.npy")
+    num = 0
 
-    patches = np.load("dtm_aeroe_64.npy").squeeze()
+    for arr in arrays:
 
-    # rebuild_ref = "/mnt/c/Users/EZRA/Desktop/tmp/DTM_AEROE/DTM_AEROE.vrt"
+        num = num + 1
+        # print("array_" + str(num))
+        
+        print("processing array {0}".format(num))
+        patches = np.load(arr).squeeze()
 
-    # raster = gdal.Open(ref)
-    # bandarr = raster.GetRasterBand(1).ReadAsArray()
-    # npy = np.array(bandarr)
+        print(patches)
 
-    result = np.zeros_like(patches, dtype="float32")
+        # rebuild_ref = "/mnt/c/Users/EZRA/Desktop/tmp/DTM_AEROE/DTM_AEROE.vrt"
 
-    for i in range(patches.shape[0]):
+        # raster = gdal.Open(ref)
+        # bandarr = raster.GetRasterBand(1).ReadAsArray()
+        # npy = np.array(bandarr)
 
-        sobel_patch = zobel_filter(patches[i], size=[5, 5], normalised=True)
-        result[i] = sobel_patch
+        result = np.zeros_like(patches, dtype="float32")
 
-    result = result[:, :, :, np.newaxis]
+        for i in range(patches.shape[0]):
 
-    import pdb
+            sobel_patch = zobel_filter(patches[i], size=[5, 5], normalised=True)
+            result[i] = sobel_patch
 
-    pdb.set_trace()
+        result = result[:, :, :, np.newaxis]
 
-    # np.save(result, "sobel_filter_DTM_64.npy")
+        # import pdb
 
+        # pdb.set_trace()
+        tile_base = os.path.basename(arr).split("_")[1:]
+        tile_name = "_".join(tile_base).split(".")[0]
+
+        np.save((out_folder + f"sobel_filter_{tile_name}.npy"), result)
+
+
+# %%
+# import numpy as np
+
+# out_folder = '/mnt/d/ACMF/Stonewalls/Data/Silkeborg/sobel/'
+
+# arr = np.array([0, 1, 2, 2, 2, 2])
+
+# np.save((out_folder + "test.npy"), arr)
+# %%
