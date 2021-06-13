@@ -40,7 +40,7 @@ const stonewall_original = new L.GeoJSON(stonewalls_geojson_4326, {
         popupOptions = {maxWidth: 250};
         layer.bindPopup("<b>Dige ID:</b> " + feature.properties.DigeID +
             "<br><b>Oprettet: </b>" + feature.properties.Oprettet.split(" ")[0] +
-            "<br><br>Here is a text box that we can fill with some sort of text. Not sure if there's any information we actually want to put here."
+            "<br><br>Here is a text box that we can fill with some sort of text"
             ,popupOptions);
     }
 }).addTo(map)
@@ -91,6 +91,39 @@ removed_walls.on('click', function(e) {
     }
 })
 
+const found_walls = new L.GeoJSON(example_found_walls, {
+    style: function(feature) {
+        if (feature.properties.image) {
+            return {        
+                fillColor: 'purple',
+                weight: 2.5,
+                color: 'orange',
+                smoothFactor: 2,
+                }
+        }
+        else
+            return {
+                color: 'purple',
+                weight: 1,
+                }
+    },
+
+    onEachFeature: function (feature, layer) {
+        var popupImg = "<br><b>Eksempel : </b>" + feature.properties.validation + "<img class= 'img-in-popup' src='" + feature.properties.image + "'>";
+        
+        if (feature.properties.image) 
+        layer.bindPopup(popupImg, {maxWidth: "auto"});
+        else 
+        layer.bindPopup("<b>Eksemple:</b> " + feature.properties.validation);
+
+    }
+}).addTo(map)
+
+found_walls.on('click', function(e) {
+    if (e.layer) {
+        console.log(e.layer.feature.properties);
+    }
+})
 
 const baseMaps = {
     "OSM Background": background,
@@ -101,6 +134,7 @@ const features = {
     "Initial Validation": stonewalls_antialiased,
     "Original Dataset": stonewall_original,
     "Removed stone walls": removed_walls,
+    "Example of found walls": found_walls,
     }
     
 L.control.layers(baseMaps, features, {collapsed: false}).addTo(map);
