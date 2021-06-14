@@ -91,6 +91,7 @@ removed_walls.on('click', function(e) {
     }
 })
 
+
 const found_walls = new L.GeoJSON(example_found_walls, {
     style: function(feature) {
         if (feature.properties.image) {
@@ -125,16 +126,54 @@ found_walls.on('click', function(e) {
     }
 })
 
+icon_new = L.divIcon({
+	className: 'custom-div-icon',
+        html: "<div style='background-color:#fc9003;' class='marker-pin'></div>",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+    });
+
+icon_rem = L.divIcon({
+    className: 'custom-div-icon',
+        html: "<div style='background-color:#f0df4a;' class='marker-pin'></div>",
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+    });
+
+
+var wall_1 = L.marker([54.955368721939244, 10.2249294934193], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_2 = L.marker([54.955228862870165, 10.225110581380115], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_3 = L.marker([54.956377206754915, 10.224057661956104,], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_4 = L.marker([54.878147488748269, 10.331451047378346], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_5 = L.marker([54.845065977693395, 10.367429529185452], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_6 = L.marker([54.84613593682873, 10.373866918335558], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_7 = L.marker([54.844889538244431, 10.375909761579445], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_8 = L.marker([54.840167385414958, 10.423951215274126], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_9 = L.marker([54.845909076513507, 10.501657828576663], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.'),
+    wall_10 = L.marker([54.84238767935274, 10.500415483858058], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.');
+
+    
+var Found = L.layerGroup([wall_1, wall_2, wall_3, wall_4, wall_5, wall_6, wall_7, wall_8, wall_9, wall_10]);
+
+var nowall_1 = L.marker([54.959369099467729, 10.219892502308168], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
+    nowall_2 = L.marker([54.857966485995043, 10.472710506255192], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
+    nowall_3 = L.marker([54.860737969367065, 10.472740591692114], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
+    nowall_4 = L.marker([54.946770698741744, 10.236846664197476], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
+    nowall_5 = L.marker([54.946721314538742, 10.236772405757392], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.');
+
+var Removed = L.layerGroup([nowall_1, nowall_2, nowall_3, nowall_4, nowall_5]);
+
+
 const baseMaps = {
     "OSM Background": background,
 }
 
 const features = {
+    "Original Dataset": stonewall_original, 
+    "Removed stone walls": removed_walls, Removed,
+    "Example of found walls": found_walls, Found,
     "Final Prediction": prediction,
     "Initial Validation": stonewalls_antialiased,
-    "Original Dataset": stonewall_original,
-    "Removed stone walls": removed_walls,
-    "Example of found walls": found_walls,
     }
     
 L.control.layers(baseMaps, features, {collapsed: false}).addTo(map);

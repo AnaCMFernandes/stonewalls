@@ -59,5 +59,28 @@ border-color: blue; */
     top: 50%;
     margin: -15px 0 0 -15px;
   }
-  
+  /* // to draw white circle */
+.marker-pin::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    margin: 3px 0 0 3px;
+    background: #fff;
+    position: absolute;
+    border-radius: 50%;
+}
+
+/* / to align icon */
+/* .custom-div-icon i {
+    position: absolute;
+    width: 22px;
+    font-size: 22px;
+    left: 0;
+    right: 0;
+    margin: 10px auto;
+    text-align: center;
+} */
+
+
 .img-in-popup{width:400px;}
+
