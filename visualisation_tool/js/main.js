@@ -32,7 +32,7 @@ const prediction = L.tileLayer('http://127.0.0.1:5500/data/prediction_tiles/{z}/
 
 const stonewall_original = new L.GeoJSON(stonewalls_geojson_4326, {
     style: {
-        color: "blue",
+        color: "orange",
     
         weight: 1,
     },
@@ -54,20 +54,10 @@ stonewall_original.on('click', function(e) {
 
 
 const removed_walls = new L.GeoJSON(filtered_removed_walls_4326_img_geojson, {
-    style: function(feature) {
-        if (feature.properties.image) {
-            return {        
-                fillColor: 'red',
-                weight: 2.5,
-                color: 'yellow',
-                smoothFactor: 2,
-                }
-        }
-        else
-            return {
-                color: 'red',
-                weight: 1,
-                }
+    style: {
+           color: 'red',
+
+           weight: 1,
     },
 
     onEachFeature: function (feature, layer) {
@@ -97,8 +87,8 @@ const found_walls = new L.GeoJSON(example_found_walls, {
         if (feature.properties.image) {
             return {        
                 fillColor: 'purple',
-                weight: 2.5,
-                color: 'orange',
+                weight: 1,
+                color: 'blue',
                 smoothFactor: 2,
                 }
         }
@@ -126,16 +116,31 @@ found_walls.on('click', function(e) {
     }
 })
 
+const filtered_found_500 = new L.GeoJSON(filtered_found_500_4326_geojson, {
+    style: {
+        color: "blue",
+    
+        weight: 1,
+    },
+
+}).addTo(map)
+
+// filtered_found_500_4326_geojson.on('click', function(e) {
+//     if (e.layer) {
+//         console.log(e.layer.feature.properties);
+//     }
+// })
+
 icon_new = L.divIcon({
 	className: 'custom-div-icon',
-        html: "<div style='background-color:#fc9003;' class='marker-pin'></div>",
+        html: "<div style='background-color:#4281f5';' class='marker-pin'></div>",
         iconSize: [30, 42],
         iconAnchor: [15, 42]
     });
 
 icon_rem = L.divIcon({
     className: 'custom-div-icon',
-        html: "<div style='background-color:#f0df4a;' class='marker-pin'></div>",
+        html: "<div style='background-color:#f54242;' class='marker-pin'></div>",
         iconSize: [30, 42],
         iconAnchor: [15, 42]
     });
@@ -153,7 +158,7 @@ var wall_1 = L.marker([54.955368721939244, 10.2249294934193], {icon: icon_new}).
     wall_10 = L.marker([54.84238767935274, 10.500415483858058], {icon: icon_new}).bindPopup('Example of predicted new stone wall. Click on the wall for image.');
 
     
-var Found = L.layerGroup([wall_1, wall_2, wall_3, wall_4, wall_5, wall_6, wall_7, wall_8, wall_9, wall_10]);
+var Found_Examples = L.layerGroup([wall_1, wall_2, wall_3, wall_4, wall_5, wall_6, wall_7, wall_8, wall_9, wall_10]);
 
 var nowall_1 = L.marker([54.959369099467729, 10.219892502308168], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
     nowall_2 = L.marker([54.857966485995043, 10.472710506255192], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
@@ -161,7 +166,7 @@ var nowall_1 = L.marker([54.959369099467729, 10.219892502308168], {icon: icon_re
     nowall_4 = L.marker([54.946770698741744, 10.236846664197476], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.'),
     nowall_5 = L.marker([54.946721314538742, 10.236772405757392], {icon: icon_rem}).bindPopup('Example of a removed/damaged stone wall. Click on the wall for image.');
 
-var Removed = L.layerGroup([nowall_1, nowall_2, nowall_3, nowall_4, nowall_5]);
+var Removed_Examples = L.layerGroup([nowall_1, nowall_2, nowall_3, nowall_4, nowall_5]);
 
 
 const baseMaps = {
@@ -170,11 +175,12 @@ const baseMaps = {
 
 const features = {
     "Original Dataset": stonewall_original, 
-    "Removed stone walls": removed_walls, Removed,
-    "Example of found walls": found_walls, Found,
+    "Removed stone walls": removed_walls, Removed_Examples,
+    "Visited found walls": found_walls, Found_Examples,
+    "Found stone walls": filtered_found_500,
     "Final Prediction": prediction,
     "Initial Validation": stonewalls_antialiased,
-    }
+}
     
 L.control.layers(baseMaps, features, {collapsed: false}).addTo(map);
 
